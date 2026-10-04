@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -8,6 +8,7 @@ import { mockMovies, type Movie } from "../data/mockMovies";
 import { fetchDiscoverMovies } from "../services/tmdb";
 import { colors } from "../theme";
 import { useRouter } from "expo-router";
+import { addToWatchlist } from "../services/library";
 
 export function DiscoverScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export function DiscoverScreen() {
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let mounted = true;

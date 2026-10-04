@@ -9,6 +9,7 @@ import { fetchDiscoverMovies } from "../services/tmdb";
 import { colors } from "../theme";
 import { useRouter } from "expo-router";
 import { addToWatchlist } from "../services/library";
+import { recordTasteAction } from "../services/taste";
 
 export function DiscoverScreen() {
   const router = useRouter();
@@ -41,7 +42,16 @@ export function DiscoverScreen() {
     setIndex((value) => value + 1);
   };
 
-  const feedback = lastAction === "like" ? "LIKE →" : lastAction === "pass" ? "← PASS" : lastAction === "watchlist" ? "↑ WATCHLIST" : lastAction === "details" ? "↓ DETAILS" : null;
+  const feedback =
+    lastAction === "like"
+      ? "LIKE"
+      : lastAction === "pass"
+        ? "PASS"
+        : lastAction === "watchlist"
+          ? "WATCHLIST"
+          : lastAction === "details"
+            ? "DETAILS"
+            : null;
 
   return (
     <View style={styles.root}>
@@ -73,7 +83,20 @@ export function DiscoverScreen() {
 
         {loading && <View style={styles.status}><ActivityIndicator color={colors.accent}/><Text style={styles.statusText}>Loading movies…</Text></View>}
         {error && !loading && <View style={styles.offline}><Text style={styles.statusText}>TMDB unavailable · using local fallback</Text></View>}
-        {feedback && <View style={styles.feedback}><Text style={styles.feedbackText}>{feedback}</Text></View>}
+        {feedback && (
+          <View style={[
+            styles.feedback,
+            feedback === "LIKE" ? styles.likeFeedback : undefined,
+            feedback === "PASS" ? styles.passFeedback : undefined,
+          ]}>
+            <MaterialCommunityIcons
+              name={feedback === "LIKE" ? "heart" : feedback === "PASS" ? "close" : feedback === "WATCHLIST" ? "bookmark" : "information-outline"}
+              size={34}
+              color={feedback === "LIKE" ? colors.like : feedback === "PASS" ? colors.pass : feedback === "WATCHLIST" ? colors.watchlist : colors.details}
+            />
+            <Text style={styles.feedbackText}>{feedback}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -93,8 +116,10 @@ const styles = StyleSheet.create({
   hudRight:{position:"absolute",right:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
   hudText:{color:colors.secondary,fontSize:9,fontWeight:"800",letterSpacing:.6},
   gestureHint:{position:"absolute",bottom:30,color:colors.muted,fontSize:10,fontWeight:"700",textAlign:"center",lineHeight:16,letterSpacing:.2},
-  feedback:{position:"absolute",top:58,paddingHorizontal:16,paddingVertical:8,borderRadius:999,backgroundColor:"rgba(12,14,20,.82)",borderWidth:1,borderColor:"rgba(208,188,255,.16)"},
-  feedbackText:{color:colors.accent,fontSize:11,fontWeight:"900",letterSpacing:1},
+  feedback:{position:"absolute",top:"43%",width:94,height:94,borderRadius:47,alignItems:"center",justifyContent:"center",gap:2,backgroundColor:"rgba(12,14,20,.90)",borderWidth:1,borderColor:"rgba(255,255,255,.10)"},
+  likeFeedback:{borderColor:"rgba(255,122,158,.35)"},
+  passFeedback:{borderColor:"rgba(255,107,117,.35)"},
+  feedbackText:{color:colors.text,fontSize:9,fontWeight:"900",letterSpacing:1.1},
   status:{position:"absolute",top:72,alignItems:"center",gap:6},statusText:{color:colors.secondary,fontSize:11},
   offline:{position:"absolute",top:72,paddingHorizontal:12,paddingVertical:6,borderRadius:999,backgroundColor:"rgba(12,14,20,.75)"}
 });

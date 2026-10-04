@@ -11,6 +11,7 @@ export type TasteEvent = {
 };
 
 const ACTIONS_KEY = "@cineswipe/taste-actions";
+let mutationQueue: Promise<void> = Promise.resolve();
 
 async function readEvents(): Promise<TasteEvent[]> {
   const raw = await AsyncStorage.getItem(ACTIONS_KEY);
@@ -22,13 +23,16 @@ async function readEvents(): Promise<TasteEvent[]> {
   }
 }
 
-export async function recordTasteAction(movie: Movie, action: TasteAction) {
-  const events = await readEvents();
-  const next = [
-    ...events.filter((event) => event.movieId !== movie.id),
-    { movieId: movie.id, action, movie, createdAt: new Date().toISOString() },
-  ];
-  await AsyncStorage.setItem(ACTIONS_KEY, JSON.stringify(next));
+export function recordTasteAction(movie: Movie, action: TasteAction): Promise<void> {
+  mutationQueue = mutationQueue.then(async () => {
+    const events = await readEvents();
+    const next = [
+      ...events.filter((event) => event.movieId !== movie.id),
+      { movieId: movie.id, action, movie, createdAt: new Date().toISOString() },
+    ];
+    await AsyncStorage.setItem(ACTIONS_KEY, JSON.stringify(next));
+  });
+  return mutationQueue;
 }
 
 export async function getTasteEvents() {

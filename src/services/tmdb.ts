@@ -36,7 +36,7 @@ const genres: Record<number, string> = {
 };
 
 function imageUrl(path: string | null, size: "w780" | "w1280") {
-  return path ? `${IMAGE_BASE_URL}/${size}${path}` : null;
+  return path ? `${IMAGE_BASE_URL}/${size}${path}` : "";
 }
 
 function toMovie(item: TmdbMovie): Movie {
@@ -49,8 +49,8 @@ function toMovie(item: TmdbMovie): Movie {
     rating: Number(item.vote_average.toFixed(1)),
     // Temporary pre-personalization score. The recommendation engine will replace this.
     match: 70,
-    poster: imageUrl(item.poster_path, "w780") ?? "",
-    backdrop: imageUrl(item.backdrop_path, "w1280") ?? "",
+    poster: imageUrl(item.poster_path, "w780"),
+    backdrop: imageUrl(item.backdrop_path, "w1280"),
     synopsis: item.overview,
   };
 }

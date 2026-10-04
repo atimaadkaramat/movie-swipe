@@ -56,13 +56,13 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { height: 74, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between", zIndex: 5, borderBottomColor: "rgba(255,255,255,0.06)", borderBottomWidth: StyleSheet.hairlineWidth },
+  header: { height: 56, paddingHorizontal: 16, paddingTop: 0, paddingBottom: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", zIndex: 5, borderBottomColor: "rgba(255,255,255,0.06)", borderBottomWidth: StyleSheet.hairlineWidth },
   brand: { color: colors.text, fontSize: 20, fontWeight: "800", letterSpacing: -0.5 },
   kicker: { color: colors.accent, fontSize: 9, fontWeight: "800", letterSpacing: 1, marginTop: 2 },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, backgroundColor: colors.surfaceGlass },
   avatar: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 34 },
+  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 28 },
   hudTop: { position: "absolute", top: 10, backgroundColor: "rgba(12,14,20,0.55)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", gap: 5, opacity: 0.85 },
   hudBottom: { position: "absolute", bottom: 6, backgroundColor: "rgba(12,14,20,0.55)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", gap: 5, opacity: 0.85 },
   hudLeft: { position: "absolute", left: 8, top: "48%", width: 38, height: 38, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(12,14,20,0.5)" },

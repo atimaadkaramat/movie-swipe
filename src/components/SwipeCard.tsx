@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, Image, PanResponder, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { colors } from "../theme";
 import type { Movie } from "../data/mockMovies";
@@ -34,7 +34,7 @@ export function SwipeCard({ movie, onAction, stackIndex = 0 }: { movie: Movie; o
   const v = position.y.interpolate({ inputRange: [-Y_THRESHOLD, 0, Y_THRESHOLD], outputRange: [1, 0, 1], extrapolate: "clamp" });
   return <Animated.View {...(stackIndex === 0 ? panResponder.panHandlers : {})} style={[styles.card, { opacity: stackIndex ? 0.62 : 1, transform: stackIndex ? [{ scale: 1 - stackIndex * 0.035 }, { translateY: stackIndex * 10 }] : [{ translateX: position.x }, { translateY: position.y }, { rotate }] }]}>
     <View style={styles.poster}>
-      <View style={styles.fallback}><MaterialCommunityIcons name="movie-open-outline" size={54} color={colors.accent}/><Text style={styles.posterText}>TMDB POSTER</Text></View>
+      <Image source={{ uri: movie.poster }} style={styles.posterImage} resizeMode="cover" onError={() => undefined} />
       <View style={styles.scrim}/>
       <Animated.View style={[styles.badge, styles.like, {opacity:h}]}><MaterialCommunityIcons name="heart" size={18} color={colors.like}/><Text style={[styles.action,{color:colors.like}]}>LIKE</Text></Animated.View>
       <Animated.View style={[styles.badge, styles.pass, {opacity:h}]}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/><Text style={[styles.action,{color:colors.pass}]}>PASS</Text></Animated.View>
@@ -47,7 +47,7 @@ export function SwipeCard({ movie, onAction, stackIndex = 0 }: { movie: Movie; o
 }
 const styles=StyleSheet.create({
  card:{position:"absolute",width:"84%",height:"72%",alignSelf:"center",borderRadius:28,overflow:"hidden",backgroundColor:colors.surface,shadowColor:"#000",shadowOpacity:.55,shadowRadius:24,shadowOffset:{width:0,height:14},elevation:16},
- poster:{flex:1,backgroundColor:"#171923"},fallback:{flex:1,alignItems:"center",justifyContent:"center",gap:10},posterText:{color:colors.muted,fontSize:10,fontWeight:"800",letterSpacing:2},scrim:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(0,0,0,.26)"},
+ poster:{flex:1,backgroundColor:"#171923"},posterImage:{...StyleSheet.absoluteFillObject,width:"100%",height:"100%"},fallback:{flex:1,alignItems:"center",justifyContent:"center",gap:10},posterText:{color:colors.muted,fontSize:10,fontWeight:"800",letterSpacing:2},scrim:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(0,0,0,.26)"},
  badge:{position:"absolute",zIndex:3,flexDirection:"row",alignItems:"center",gap:6,borderRadius:999,paddingHorizontal:13,paddingVertical:8,backgroundColor:"rgba(12,14,20,.78)"},like:{right:18,top:"47%"},pass:{left:18,top:"47%"},watch:{alignSelf:"center",top:18},details:{alignSelf:"center",bottom:112},action:{fontSize:10,fontWeight:"900",letterSpacing:.8},
  match:{position:"absolute",top:18,left:18,backgroundColor:"rgba(12,14,20,.76)",borderRadius:999,paddingHorizontal:12,paddingVertical:7},matchText:{color:colors.accent,fontSize:11,fontWeight:"900",letterSpacing:.7},
  info:{position:"absolute",left:20,right:20,bottom:22},title:{color:colors.text,fontSize:30,fontWeight:"900",letterSpacing:-.6},meta:{color:colors.secondary,marginTop:6,fontSize:12},rating:{color:colors.watchlist,marginTop:10,fontWeight:"800"}

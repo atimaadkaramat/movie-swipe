@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "CineSwipe",
+    "slug": "cineswipe",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "cineswipe",
+    "android": {
+      "package": "com.cineswipe.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#111319"
+      }
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

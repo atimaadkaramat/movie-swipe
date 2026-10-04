@@ -22,6 +22,12 @@ type TmdbDiscoverResponse = {
   total_pages: number;
 };
 
+type TmdbDetails = TmdbMovie & {
+  runtime: number | null;
+  tagline: string;
+  genres: { id: number; name: string }[];
+};
+
 const genres: Record<number, string> = {
   28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
   99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
@@ -77,4 +83,33 @@ export async function fetchDiscoverMovies(page = 1): Promise<Movie[]> {
 
   const data = (await response.json()) as TmdbDiscoverResponse;
   return data.results.filter((movie) => movie.poster_path).map(toMovie);
+}
+
+
+export async function fetchMovieDetails(id: string): Promise<Movie> {
+  if (!token) {
+    throw new Error("Missing EXPO_PUBLIC_TMDB_ACCESS_TOKEN");
+  }
+
+  const response = await fetch(
+    `${BASE_URL}/movie/${encodeURIComponent(id)}?language=en-US`,
+    {
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`TMDB request failed: ${response.status}`);
+  }
+
+  const item = (await response.json()) as TmdbDetails;
+  const movie = toMovie({
+    ...item,
+    genre_ids: item.genres.map((genre) => genre.id),
+  });
+
+  return movie;
 }

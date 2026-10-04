@@ -3,7 +3,7 @@
 ## Product identity
 - **Name:** CineSwipe
 - **Platform:** Android
-- **Package ID:** `com.atimaad.cineswipe`
+- **Package ID:** `com.cineswipe.app`
 - **Repository:** `atimaadkaramat/movie-swipe`
 
 ## Product direction

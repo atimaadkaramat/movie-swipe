@@ -1,20 +1,36 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import { SwipeCard } from "../components/SwipeCard";
-import { mockMovies } from "../data/mockMovies";
+import { SwipeCard, type SwipeAction } from "../components/SwipeCard";
+import { mockMovies, type Movie } from "../data/mockMovies";
+import { fetchDiscoverMovies } from "../services/tmdb";
 import { colors } from "../theme";
 import { useRouter } from "expo-router";
 
 export function DiscoverScreen() {
   const router = useRouter();
+  const [movies, setMovies] = useState<Movie[]>(mockMovies);
   const [index, setIndex] = useState(0);
-  const [lastAction, setLastAction] = useState<string | null>(null);
-  const movie = mockMovies[index % mockMovies.length];
+  const [lastAction, setLastAction] = useState<SwipeAction | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const handleAction = (action: "pass" | "like" | "watchlist" | "details") => {
+  useEffect(() => {
+    let mounted = true;
+    fetchDiscoverMovies()
+      .then((items) => { if (mounted && items.length) setMovies(items); })
+      .catch(() => { if (mounted) setError(true); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  const movie = movies[index % movies.length];
+  const nextMovie = movies[(index + 1) % movies.length];
+  const nextNextMovie = movies[(index + 2) % movies.length];
+
+  const handleAction = (action: SwipeAction) => {
     setLastAction(action);
     if (action === "details") {
       router.push(`/movie/${movie.id}`);
@@ -23,52 +39,60 @@ export function DiscoverScreen() {
     setIndex((value) => value + 1);
   };
 
-  const actionLabel = lastAction === "like" ? "LIKE →" : lastAction === "pass" ? "← PASS" : lastAction === "watchlist" ? "↑ WATCHLIST" : null;
+  const feedback = lastAction === "like" ? "LIKE →" : lastAction === "pass" ? "← PASS" : lastAction === "watchlist" ? "↑ WATCHLIST" : lastAction === "details" ? "↓ DETAILS" : null;
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={["#1B1630", colors.background, colors.background]} style={StyleSheet.absoluteFillObject} />
-      <BlurView intensity={24} tint="dark" style={styles.header}>
-        <View>
-          <Text style={styles.brand}>CineSwipe</Text>
-          <Text style={styles.kicker}>DISCOVER SWIPE</Text>
+      <LinearGradient colors={["#211A3A", "#151721", colors.background]} style={StyleSheet.absoluteFillObject} />
+      <View style={styles.ambientGlow} />
+
+      <BlurView intensity={28} tint="dark" style={styles.header}>
+        <View style={styles.brandGroup}>
+          <View style={styles.logoMark}><MaterialCommunityIcons name="movie-open-outline" size={17} color={colors.accent} /></View>
+          <View><Text style={styles.brand}>CineSwipe</Text><Text style={styles.kicker}>DISCOVER SWIPE</Text></View>
         </View>
         <View style={styles.headerActions}>
-          <Pressable style={styles.iconButton} accessibilityLabel="Filter tastes"><MaterialCommunityIcons name="tune-variant" size={20} color={colors.text} /></Pressable>
-          <Pressable style={styles.avatar}><MaterialCommunityIcons name="account-circle" size={34} color={colors.accent} /></Pressable>
+          <Pressable style={styles.iconButton} accessibilityLabel="Filter tastes"><MaterialCommunityIcons name="tune-variant" size={19} color={colors.text} /></Pressable>
+          <Pressable style={styles.avatar} accessibilityLabel="Profile"><MaterialCommunityIcons name="account-circle" size={34} color={colors.accent} /></Pressable>
         </View>
       </BlurView>
 
       <View style={styles.content}>
-        <View style={styles.hudTop}><MaterialCommunityIcons name="bookmark-outline" size={16} color={colors.watchlist} /><Text style={styles.hudText}>WATCHLIST</Text></View>
-        <View style={styles.hudBottom}><MaterialCommunityIcons name="information-outline" size={16} color={colors.details} /><Text style={styles.hudText}>DETAILS</Text></View>
-        <View style={styles.hudLeft}><MaterialCommunityIcons name="close" size={18} color={colors.pass} /></View>
-        <View style={styles.hudRight}><MaterialCommunityIcons name="heart-outline" size={18} color={colors.like} /></View>
+        <View style={styles.hudTop}><MaterialCommunityIcons name="bookmark-outline" size={15} color={colors.watchlist}/><Text style={styles.hudText}>WATCHLIST</Text></View>
+        <View style={styles.hudBottom}><MaterialCommunityIcons name="information-outline" size={15} color={colors.details}/><Text style={styles.hudText}>DETAILS</Text></View>
+        <View style={styles.hudLeft}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/></View>
+        <View style={styles.hudRight}><MaterialCommunityIcons name="heart-outline" size={18} color={colors.like}/></View>
 
-        <SwipeCard movie={movie} onAction={handleAction} />
+        <SwipeCard movie={nextNextMovie} stackIndex={2} onAction={handleAction}/>
+        <SwipeCard movie={nextMovie} stackIndex={1} onAction={handleAction}/>
+        <SwipeCard movie={movie} onAction={handleAction}/>
+
         <Text style={styles.gestureHint}>← PASS   •   LIKE →{"\n"}↑ WATCHLIST   •   ↓ DETAILS</Text>
 
-        {lastAction && <View style={styles.feedback}><Text style={styles.feedbackText}>{actionLabel}</Text></View>}
+        {loading && <View style={styles.status}><ActivityIndicator color={colors.accent}/><Text style={styles.statusText}>Loading movies…</Text></View>}
+        {error && !loading && <View style={styles.offline}><Text style={styles.statusText}>TMDB unavailable · using local fallback</Text></View>}
+        {feedback && <View style={styles.feedback}><Text style={styles.feedbackText}>{feedback}</Text></View>}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  header: { height: 56, paddingHorizontal: 16, paddingTop: 0, paddingBottom: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", zIndex: 5, borderBottomColor: "rgba(255,255,255,0.06)", borderBottomWidth: StyleSheet.hairlineWidth },
-  brand: { color: colors.text, fontSize: 20, fontWeight: "800", letterSpacing: -0.5 },
-  kicker: { color: colors.accent, fontSize: 9, fontWeight: "800", letterSpacing: 1, marginTop: 2 },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
-  iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, backgroundColor: colors.surfaceGlass },
-  avatar: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 28 },
-  hudTop: { position: "absolute", top: 10, backgroundColor: "rgba(12,14,20,0.55)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", gap: 5, opacity: 0.85 },
-  hudBottom: { position: "absolute", bottom: 6, backgroundColor: "rgba(12,14,20,0.55)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", gap: 5, opacity: 0.85 },
-  hudLeft: { position: "absolute", left: 8, top: "48%", width: 38, height: 38, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(12,14,20,0.5)" },
-  hudRight: { position: "absolute", right: 8, top: "48%", width: 38, height: 38, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(12,14,20,0.5)" },
-  hudText: { color: colors.secondary, fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
-  gestureHint: { position: "absolute", bottom: 30, color: colors.muted, fontSize: 10, fontWeight: "700", textAlign: "center", lineHeight: 16 },
-  feedback: { position: "absolute", top: "12%", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: "rgba(12,14,20,0.8)" },
-  feedbackText: { color: colors.accent, fontSize: 12, fontWeight: "900", letterSpacing: 1 },
+  root:{flex:1,backgroundColor:colors.background},
+  ambientGlow:{position:"absolute",width:300,height:300,borderRadius:150,top:-70,alignSelf:"center",backgroundColor:"rgba(208,188,255,0.14)",shadowColor:colors.accent,shadowOpacity:.3,shadowRadius:70},
+  header:{height:56,paddingHorizontal:16,flexDirection:"row",alignItems:"center",justifyContent:"space-between",zIndex:5,borderBottomColor:"rgba(255,255,255,.05)",borderBottomWidth:StyleSheet.hairlineWidth},
+  brandGroup:{flexDirection:"row",alignItems:"center",gap:8},logoMark:{width:32,height:32,borderRadius:10,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(208,188,255,.12)"},
+  brand:{color:colors.text,fontSize:20,fontWeight:"800",letterSpacing:-.5},kicker:{color:colors.accent,fontSize:10,fontWeight:"800",letterSpacing:.5,marginTop:1},
+  headerActions:{flexDirection:"row",alignItems:"center",gap:4},iconButton:{width:44,height:44,alignItems:"center",justifyContent:"center",borderRadius:999,backgroundColor:colors.surfaceGlass},avatar:{width:44,height:44,alignItems:"center",justifyContent:"center"},
+  content:{flex:1,alignItems:"center",justifyContent:"center",paddingBottom:28},
+  hudTop:{position:"absolute",top:8,backgroundColor:"rgba(12,14,20,.68)",borderRadius:999,paddingHorizontal:12,paddingVertical:5,flexDirection:"row",gap:5,opacity:.55},
+  hudBottom:{position:"absolute",bottom:8,backgroundColor:"rgba(12,14,20,.68)",borderRadius:999,paddingHorizontal:12,paddingVertical:5,flexDirection:"row",gap:5,opacity:.55},
+  hudLeft:{position:"absolute",left:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
+  hudRight:{position:"absolute",right:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
+  hudText:{color:colors.secondary,fontSize:9,fontWeight:"800",letterSpacing:.6},
+  gestureHint:{position:"absolute",bottom:30,color:colors.muted,fontSize:10,fontWeight:"700",textAlign:"center",lineHeight:16,letterSpacing:.2},
+  feedback:{position:"absolute",top:58,paddingHorizontal:16,paddingVertical:8,borderRadius:999,backgroundColor:"rgba(12,14,20,.82)",borderWidth:1,borderColor:"rgba(208,188,255,.16)"},
+  feedbackText:{color:colors.accent,fontSize:11,fontWeight:"900",letterSpacing:1},
+  status:{position:"absolute",top:72,alignItems:"center",gap:6},statusText:{color:colors.secondary,fontSize:11},
+  offline:{position:"absolute",top:72,paddingHorizontal:12,paddingVertical:6,borderRadius:999,backgroundColor:"rgba(12,14,20,.75)"}
 });

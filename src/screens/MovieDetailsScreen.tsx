@@ -12,19 +12,26 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { fetchMovieDetails } from "../services/tmdb";
+import { getMovieMatch } from "../services/taste";
 import type { Movie } from "../data/mockMovies";
 import { colors } from "../theme";
 
 export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   const router = useRouter();
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [match, setMatch] = useState(70);
   const [loading, setLoading] = useState(true);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     fetchMovieDetails(movieId)
       .then((item) => {
-        if (mounted) setMovie(item);
+        if (mounted) {
+          setMovie(item);
+          const score = await getMovieMatch(item);
+          if (mounted) setMatch(score);
+        }
       })
       .catch(() => {
         if (mounted) setMovie(null);
@@ -36,7 +43,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
     return () => {
       mounted = false;
     };
-  }, [movieId]);
+  }, [movieId, retryKey]);
 
   if (loading) {
     return (
@@ -53,9 +60,14 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
         <MaterialCommunityIcons name="cloud-alert-outline" size={42} color={colors.muted} />
         <Text style={styles.errorTitle}>Couldn’t load this movie</Text>
         <Text style={styles.errorBody}>Check your connection and try again.</Text>
-        <Pressable style={styles.retry} onPress={() => router.back()}>
-          <Text style={styles.retryText}>GO BACK</Text>
-        </Pressable>
+        <View style={styles.errorActions}>
+          <Pressable style={styles.retry} onPress={() => setRetryKey((value) => value + 1)}>
+            <Text style={styles.retryText}>TRY AGAIN</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryAction} onPress={() => router.back()}>
+            <Text style={styles.secondaryActionText}>GO BACK</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -87,7 +99,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
           <View style={styles.stats}>
             <View style={styles.matchCard}>
               <Text style={styles.statLabel}>YOUR TASTE MATCH</Text>
-              <Text style={styles.matchValue}>{movie.match}%</Text>
+              <Text style={styles.matchValue}>{match}%</Text>
               <Text style={styles.statHint}>Based on your current taste profile</Text>
             </View>
             <View style={styles.ratingCard}>
@@ -123,8 +135,11 @@ const styles = StyleSheet.create({
   loading: { color: colors.secondary, marginTop: 12, fontSize: 13 },
   errorTitle: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: 16 },
   errorBody: { color: colors.secondary, fontSize: 14, marginTop: 8, textAlign: "center" },
-  retry: { marginTop: 20, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999, backgroundColor: colors.surface },
-  retryText: { color: colors.accent, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
+  errorActions: { flexDirection: "row", gap: 10, marginTop: 20 },
+  retry: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999, backgroundColor: colors.accent },
+  secondaryAction: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  retryText: { color: colors.background, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
+  secondaryActionText: { color: colors.accent, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
   scroll: { paddingBottom: 36 },
   hero: { height: 430, overflow: "hidden" },
   backdrop: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },

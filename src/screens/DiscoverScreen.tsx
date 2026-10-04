@@ -17,7 +17,8 @@ export function DiscoverScreen() {
   const [index, setIndex] = useState(0);
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);\n  const [matches, setMatches] = useState<Record<string, number>>({});
+  const [error, setError] = useState(false);
+  const [matches, setMatches] = useState<Record<string, number>>({});
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

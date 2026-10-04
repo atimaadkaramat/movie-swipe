@@ -140,7 +140,7 @@ export function DiscoverScreen() {
         <MaterialCommunityIcons name="movie-off-outline" size={42} color={colors.muted} />
         <Text style={styles.emptyTitle}>No movies available</Text>
         <Text style={styles.emptyBody}>We couldn't load a discovery queue.</Text>
-        <Pressable style={styles.retry} onPress={() => router.replace("/discover")}>
+        <Pressable style={styles.retry} onPress={() => router.replace("/(tabs)/discover")}>
           <Text style={styles.retryText}>RETRY</Text>
         </Pressable>
       </View>

@@ -45,13 +45,13 @@ Exit: product requirements and architecture approved; Supabase project is indepe
 
 ## Phase 1 — UI/UX Design
 Goal: establish the mobile design system.
-- [ ] Research mobile patterns with Mobbin.
-- [ ] Define visual direction, typography, spacing, navigation.
-- [ ] Design onboarding, auth, Discover, movie details, Library, Feed, People, Profile.
-- [ ] Define loading/error/empty states.
-- [ ] Specify swipe animations and feedback.
+- [ ] Research mobile patterns with Mobbin. *(Blocked: Mobbin MCP requires a paid plan.)*
+- [x] Define visual direction, typography, spacing, navigation.
+- [x] Approve core screen designs: Discover, Movie Details, Library, Movie Twin/Social, Profile/Taste DNA.
+- [x] Define loading/error/empty states.
+- [x] Specify four-direction swipe animations and feedback.
 
-Exit: core screens and reusable component system are specified.
+Exit: approved Figma concept is the visual source of truth; implementation begins with Phase 2.
 
 ## Phase 2 — Project & Infrastructure
 Goal: establish the independent Android project.

@@ -43,10 +43,12 @@ export function SwipeCard({ movie, onAction, stackIndex = 0, match }: { movie: M
     <View style={styles.poster}>
       {movie.poster ? <Image source={{ uri: movie.poster }} style={styles.posterImage} resizeMode="cover" /> : <View style={styles.fallback}><MaterialCommunityIcons name="movie-open-outline" size={42} color={colors.muted} /><Text style={styles.fallbackText}>CINESWIPE</Text></View>}
       <View style={styles.scrim}/>
-      <Animated.View style={[styles.badge, styles.like, {opacity:likeOpacity}]}><MaterialCommunityIcons name="heart" size={18} color={colors.like}/><Text style={[styles.action,{color:colors.like}]}>LIKE</Text></Animated.View>
-      <Animated.View style={[styles.badge, styles.pass, {opacity:passOpacity}]}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/><Text style={[styles.action,{color:colors.pass}]}>PASS</Text></Animated.View>
-      <Animated.View style={[styles.badge, styles.watch, {opacity:watchlistOpacity}]}><MaterialCommunityIcons name="bookmark" size={18} color={colors.watchlist}/><Text style={[styles.action,{color:colors.watchlist}]}>WATCHLIST</Text></Animated.View>
-      <Animated.View style={[styles.badge, styles.details, {opacity:detailsOpacity}]}><MaterialCommunityIcons name="information-outline" size={18} color={colors.details}/><Text style={[styles.action,{color:colors.details}]}>DETAILS</Text></Animated.View>
+      {stackIndex === 0 && <>
+        <Animated.View style={[styles.badge, styles.like, {opacity:likeOpacity}]}><MaterialCommunityIcons name="heart" size={18} color={colors.like}/><Text style={[styles.action,{color:colors.like}]}>LIKE</Text></Animated.View>
+        <Animated.View style={[styles.badge, styles.pass, {opacity:passOpacity}]}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/><Text style={[styles.action,{color:colors.pass}]}>PASS</Text></Animated.View>
+        <Animated.View style={[styles.badge, styles.watch, {opacity:watchlistOpacity}]}><MaterialCommunityIcons name="bookmark" size={18} color={colors.watchlist}/><Text style={[styles.action,{color:colors.watchlist}]}>WATCHLIST</Text></Animated.View>
+        <Animated.View style={[styles.badge, styles.details, {opacity:detailsOpacity}]}><MaterialCommunityIcons name="information-outline" size={18} color={colors.details}/><Text style={[styles.action,{color:colors.details}]}>DETAILS</Text></Animated.View>
+      </>
       {stackIndex === 0 && <View style={styles.match}><Text style={styles.matchText}>{match ?? movie.match}% MATCH</Text></View>}
       {stackIndex === 0 && <View style={styles.info}><Text style={styles.title}>{movie.title}</Text><Text style={styles.meta}>{movie.year}  •  {movie.genres.join("  •  ")}</Text><Text style={styles.rating}>★ {movie.rating.toFixed(1)}</Text></View>}
     </View>

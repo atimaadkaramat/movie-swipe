@@ -1,4 +1,4 @@
-# MovieSwipe Development Roadmap
+# CineSwipe Development Roadmap
 
 Master roadmap for the Android movie-social application. This is the project's phase gate.
 
@@ -6,20 +6,40 @@ Master roadmap for the Android movie-social application. This is the project's p
 1. Android-first.
 2. Separate product from Radix Automations.
 3. Dedicated Supabase project/database.
-4. Never connect MovieSwipe to the existing Radix Neon database.
+4. Never connect CineSwipe to the existing Radix Neon database.
 5. Free-first architecture.
 6. Never ship privileged secrets in the Android client.
 7. This repository and its documentation are the source of truth.
 
 ## Phase 0 — Product & Architecture
 Goal: freeze product direction and technical boundaries.
-- [ ] Confirm product name/branding.
-- [ ] Define target audience.
-- [ ] Finalize MVP scope.
-- [ ] Finalize Android package/application ID.
-- [ ] Create dedicated Supabase project.
-- [ ] Document environment separation.
-- [ ] Finalize architecture and initial data model.
+- [x] Confirm product name/branding — **CineSwipe**.
+- [x] Define target audience — Android users who enjoy movie discovery and social recommendations.
+- [x] Finalize MVP scope.
+- [x] Finalize Android package/application ID — `com.atimaad.cineswipe`.
+- [x] Create dedicated Supabase project — **CineSwipe**, region `ap-south-1`.
+- [x] Document environment separation.
+- [x] Finalize architecture and initial data model.
+
+### Phase 0 decisions
+| Decision | Final choice |
+|---|---|
+| Product | CineSwipe |
+| Platform | Android |
+| Package ID | `com.atimaad.cineswipe` |
+| GitHub | `atimaadkaramat/movie-swipe` |
+| Database/Auth | Dedicated Supabase project |
+| Supabase project ID | `yenrcyropgbhwvluzplj` |
+| Supabase region | `ap-south-1` |
+| Movie metadata | TMDB |
+| Email | Resend |
+| UI research | Mobbin |
+| Development/prototyping | Replit |
+| Source of truth | GitHub repository |
+| Cost policy | Free-first |
+| Radix dependency | None |
+
+**Environment boundary:** CineSwipe must not use Radix Automations credentials, APIs, Neon database, authentication, customer/employee data, or production environment variables.
 
 Exit: product requirements and architecture approved; Supabase project is independent; no Radix dependency.
 
@@ -72,7 +92,7 @@ Exit: secure registration and session flow works end-to-end.
 Exit: real movie data renders reliably.
 
 ## Phase 5 — Swipe Engine
-Goal: build the core MovieSwipe interaction.
+Goal: build the core CineSwipe interaction.
 - [ ] Right swipe = Like.
 - [ ] Left swipe = Pass.
 - [ ] Save/Wishlist.

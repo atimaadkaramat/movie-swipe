@@ -26,6 +26,8 @@ export function SwipeCard({ movie, onAction, stackIndex = 0, match }: Props) {
   const isActive = stackIndex === 0;
   const [imageFailed, setImageFailed] = useState(false);
   const position = useRef(new Animated.ValueXY()).current;
+  const onActionRef = useRef(onAction);
+  onActionRef.current = onAction;
 
   useEffect(() => {
     setImageFailed(false);
@@ -94,7 +96,7 @@ export function SwipeCard({ movie, onAction, stackIndex = 0, match }: Props) {
         }).start(({ finished }) => {
           if (finished) {
             position.setValue({ x: 0, y: 0 });
-            onAction(action);
+            onActionRef.current(action);
           }
         });
       },

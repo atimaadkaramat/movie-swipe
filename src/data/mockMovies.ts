@@ -18,8 +18,8 @@ export const mockMovies: Movie[] = [
     genres: ["Sci-Fi", "Drama"],
     rating: 8.9,
     match: 94,
-    poster: "https://image.tmdb.org/t/p/w780/placeholder.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/placeholder.jpg",
+    poster: "",
+    backdrop: "",
     synopsis: "A deep-space expedition enters a region where gravity, memory and consequence no longer behave normally.",
   },
   {
@@ -29,8 +29,8 @@ export const mockMovies: Movie[] = [
     genres: ["Mystery", "Thriller"],
     rating: 8.2,
     match: 88,
-    poster: "https://image.tmdb.org/t/p/w780/placeholder.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/placeholder.jpg",
+    poster: "",
+    backdrop: "",
     synopsis: "A late-night radio host discovers a transmission that appears to predict events before they happen.",
   },
   {
@@ -40,8 +40,8 @@ export const mockMovies: Movie[] = [
     genres: ["Drama", "Romance"],
     rating: 8.5,
     match: 81,
-    poster: "https://image.tmdb.org/t/p/w780/placeholder.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/placeholder.jpg",
+    poster: "",
+    backdrop: "",
     synopsis: "Two strangers reconnect years later while trying to understand what they remember differently.",
   },
 ];

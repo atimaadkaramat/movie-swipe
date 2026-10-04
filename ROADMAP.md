@@ -61,7 +61,8 @@ Exit: approved Figma concept is the visual source of truth; implementation begin
 - [x] Add Discover, Social, Library, and Profile navigation surfaces.
 - [x] Establish reusable cinematic design tokens.
 - [x] Add local mock movie data and a functional four-direction swipe prototype.
-- [ ] Connect the project to the GitHub development workflow and validate Android build.
+- [x] Establish the GitHub development branch and Android app foundation.
+- [ ] Validate the Android build on device/emulator.
 - [ ] Configure Supabase client for the dedicated CineSwipe project without committing secrets.
 - [ ] Configure TMDB integration boundary.
 

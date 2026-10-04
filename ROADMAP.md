@@ -16,7 +16,7 @@ Goal: freeze product direction and technical boundaries.
 - [x] Confirm product name/branding — **CineSwipe**.
 - [x] Define target audience — Android users who enjoy movie discovery and social recommendations.
 - [x] Finalize MVP scope.
-- [x] Finalize Android package/application ID — `com.atimaad.cineswipe`.
+- [x] Finalize Android package/application ID — `com.cineswipe.app`.
 - [x] Create dedicated Supabase project — **CineSwipe**, region `ap-south-1`.
 - [x] Document environment separation.
 - [x] Finalize architecture and initial data model.
@@ -26,7 +26,7 @@ Goal: freeze product direction and technical boundaries.
 |---|---|
 | Product | CineSwipe |
 | Platform | Android |
-| Package ID | `com.atimaad.cineswipe` |
+| Package ID | `com.cineswipe.app` |
 | GitHub | `atimaadkaramat/movie-swipe` |
 | Database/Auth | Dedicated Supabase project |
 | Supabase project ID | `yenrcyropgbhwvluzplj` |

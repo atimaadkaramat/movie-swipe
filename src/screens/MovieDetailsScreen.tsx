@@ -26,12 +26,11 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   useEffect(() => {
     let mounted = true;
     fetchMovieDetails(movieId)
-      .then((item) => {
-        if (mounted) {
-          setMovie(item);
-          const score = await getMovieMatch(item);
-          if (mounted) setMatch(score);
-        }
+      .then(async (item) => {
+        if (!mounted) return;
+        setMovie(item);
+        const score = await getMovieMatch(item);
+        if (mounted) setMatch(score);
       })
       .catch(() => {
         if (mounted) setMovie(null);

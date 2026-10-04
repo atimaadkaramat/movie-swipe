@@ -9,7 +9,7 @@ import { fetchDiscoverMovies } from "../services/tmdb";
 import { colors } from "../theme";
 import { useRouter } from "expo-router";
 import { addToWatchlist } from "../services/library";
-import { recordTasteAction } from "../services/taste";
+import { getMovieMatch, recordTasteAction } from "../services/taste";
 
 export function DiscoverScreen() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function DiscoverScreen() {
   const [index, setIndex] = useState(0);
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(false);\n  const [matches, setMatches] = useState<Record<string, number>>({});
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -33,12 +33,21 @@ export function DiscoverScreen() {
   const nextMovie = movies[(index + 1) % movies.length];
   const nextNextMovie = movies[(index + 2) % movies.length];
 
-  const handleAction = (action: SwipeAction) => {
+  const handleAction = async (action: SwipeAction) => {
     setLastAction(action);
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = setTimeout(() => setLastAction(null), 650);
+
     if (action === "details") {
       router.push(`/movie/${movie.id}`);
       return;
     }
+
+    if (action === "watchlist") {
+      await addToWatchlist(movie);
+    }
+
+    await recordTasteAction(movie, action);
     setIndex((value) => value + 1);
   };
 
@@ -75,9 +84,9 @@ export function DiscoverScreen() {
         <View style={styles.hudLeft}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/></View>
         <View style={styles.hudRight}><MaterialCommunityIcons name="heart-outline" size={18} color={colors.like}/></View>
 
-        <SwipeCard movie={nextNextMovie} stackIndex={2} onAction={handleAction}/>
-        <SwipeCard movie={nextMovie} stackIndex={1} onAction={handleAction}/>
-        <SwipeCard movie={movie} onAction={handleAction}/>
+        <SwipeCard movie={nextNextMovie} stackIndex={2} onAction={handleAction} />
+        <SwipeCard movie={nextMovie} stackIndex={1} onAction={handleAction} />
+        <SwipeCard movie={movie} onAction={handleAction} match={matches[movie.id]} />
 
         <Text style={styles.gestureHint}>← PASS   •   LIKE →{"\n"}↑ WATCHLIST   •   ↓ DETAILS</Text>
 
@@ -116,10 +125,10 @@ const styles = StyleSheet.create({
   hudRight:{position:"absolute",right:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
   hudText:{color:colors.secondary,fontSize:9,fontWeight:"800",letterSpacing:.6},
   gestureHint:{position:"absolute",bottom:30,color:colors.muted,fontSize:10,fontWeight:"700",textAlign:"center",lineHeight:16,letterSpacing:.2},
-  feedback:{position:"absolute",top:"43%",width:94,height:94,borderRadius:47,alignItems:"center",justifyContent:"center",gap:2,backgroundColor:"rgba(12,14,20,.90)",borderWidth:1,borderColor:"rgba(255,255,255,.10)"},
+  feedback:{position:"absolute",top:"42%",width:112,height:112,borderRadius:56,alignItems:"center",justifyContent:"center",gap:3,backgroundColor:"rgba(8,10,16,.94)",borderWidth:1.5,borderColor:"rgba(255,255,255,.12)",shadowColor:"#000",shadowOpacity:.4,shadowRadius:24,elevation:14},
   likeFeedback:{borderColor:"rgba(255,122,158,.35)"},
   passFeedback:{borderColor:"rgba(255,107,117,.35)"},
-  feedbackText:{color:colors.text,fontSize:9,fontWeight:"900",letterSpacing:1.1},
+  feedbackText:{color:colors.text,fontSize:10,fontWeight:"900",letterSpacing:1.3},
   status:{position:"absolute",top:72,alignItems:"center",gap:6},statusText:{color:colors.secondary,fontSize:11},
   offline:{position:"absolute",top:72,paddingHorizontal:12,paddingVertical:6,borderRadius:999,backgroundColor:"rgba(12,14,20,.75)"}
 });

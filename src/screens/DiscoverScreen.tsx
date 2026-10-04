@@ -75,7 +75,7 @@ export function DiscoverScreen() {
         </View>
         <View style={styles.headerActions}>
           <Pressable style={styles.iconButton} accessibilityLabel="Filter tastes"><MaterialCommunityIcons name="tune-variant" size={19} color={colors.text} /></Pressable>
-          <Pressable style={styles.avatar} accessibilityLabel="Profile"><MaterialCommunityIcons name="account-circle" size={34} color={colors.accent} /></Pressable>
+          <Pressable style={styles.avatar} accessibilityLabel="Profile"><MaterialCommunityIcons name="account-circle" size={52} color={colors.accent} /></Pressable>
         </View>
       </BlurView>
 
@@ -119,17 +119,17 @@ const styles = StyleSheet.create({
   brandGroup:{flexDirection:"row",alignItems:"center",gap:8},logoMark:{width:32,height:32,borderRadius:10,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(208,188,255,.12)"},
   brand:{color:colors.text,fontSize:20,fontWeight:"800",letterSpacing:-.5},kicker:{color:colors.accent,fontSize:10,fontWeight:"800",letterSpacing:.5,marginTop:1},
   headerActions:{flexDirection:"row",alignItems:"center",gap:4},iconButton:{width:44,height:44,alignItems:"center",justifyContent:"center",borderRadius:999,backgroundColor:colors.surfaceGlass},avatar:{width:44,height:44,alignItems:"center",justifyContent:"center"},
-  content:{flex:1,alignItems:"center",justifyContent:"center",paddingBottom:28},
+  content:{flex:1,alignItems:"center",justifyContent:"center",paddingBottom:52},
   hudTop:{position:"absolute",top:8,backgroundColor:"rgba(12,14,20,.68)",borderRadius:999,paddingHorizontal:12,paddingVertical:5,flexDirection:"row",gap:5,opacity:.55},
   hudBottom:{position:"absolute",bottom:8,backgroundColor:"rgba(12,14,20,.68)",borderRadius:999,paddingHorizontal:12,paddingVertical:5,flexDirection:"row",gap:5,opacity:.55},
   hudLeft:{position:"absolute",left:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
   hudRight:{position:"absolute",right:8,top:"48%",width:38,height:38,borderRadius:999,alignItems:"center",justifyContent:"center",backgroundColor:"rgba(12,14,20,.48)",opacity:.55},
   hudText:{color:colors.secondary,fontSize:9,fontWeight:"800",letterSpacing:.6},
-  gestureHint:{position:"absolute",bottom:30,color:colors.muted,fontSize:10,fontWeight:"700",textAlign:"center",lineHeight:16,letterSpacing:.2},
-  feedback:{position:"absolute",top:"42%",width:112,height:112,borderRadius:56,alignItems:"center",justifyContent:"center",gap:3,backgroundColor:"rgba(8,10,16,.94)",borderWidth:1.5,borderColor:"rgba(255,255,255,.12)",shadowColor:"#000",shadowOpacity:.4,shadowRadius:24,elevation:14},
+  gestureHint:{position:"absolute",bottom:12,color:colors.muted,fontSize:10,fontWeight:"700",textAlign:"center",lineHeight:16,letterSpacing:.2},
+  feedback:{position:"absolute",top:"39%",width:132,height:132,borderRadius:66,alignItems:"center",justifyContent:"center",gap:5,backgroundColor:"rgba(8,10,16,.97)",borderWidth:2,borderColor:"rgba(255,255,255,.16)",shadowColor:"#000",shadowOpacity:.55,shadowRadius:30,elevation:18,zIndex:50},
   likeFeedback:{borderColor:"rgba(255,122,158,.35)"},
   passFeedback:{borderColor:"rgba(255,107,117,.35)"},
-  feedbackText:{color:colors.text,fontSize:10,fontWeight:"900",letterSpacing:1.3},
+  feedbackText:{color:colors.text,fontSize:12,fontWeight:"900",letterSpacing:1.5},
   status:{position:"absolute",top:72,alignItems:"center",gap:6},statusText:{color:colors.secondary,fontSize:11},
   offline:{position:"absolute",top:72,paddingHorizontal:12,paddingVertical:6,borderRadius:999,backgroundColor:"rgba(12,14,20,.75)"}
 });

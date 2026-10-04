@@ -1,33 +1,30 @@
-# MovieSwipe
+# CineSwipe
 
-An Android-first social movie discovery app built around swipe-based discovery, personal taste, recommendations, and social movie activity.
+Android-first social movie discovery app.
 
-## Core idea
-Discover → Swipe → Like/Pass/Save → Watch → Rate → Improve taste profile → Get better recommendations → Follow people with similar taste.
+## Current implementation
 
-## Project boundaries
-- Android application only for the initial release.
-- Separate product from Radix Automations.
-- Separate GitHub repository.
-- Separate Supabase project and database.
-- No dependency on the Radix website, Radix APIs, Radix authentication, or Radix Neon database.
-- Free-first architecture: avoid paid infrastructure until a real free-tier limitation is reached.
+Phase 2 foundation is being built with Expo + React Native + TypeScript.
 
-## Planned stack
-- Expo + React Native + TypeScript
-- Expo Router
-- Supabase PostgreSQL + Auth + Realtime
-- TMDB API for movie metadata
-- Resend for email
-- GitHub for source control
-- Mobbin for UI/UX research
-- Replit for development/prototyping where useful
-- Context7 for current technical documentation
-- PostHog later for analytics
-- Expo/EAS for Android builds and distribution
+- Android application ID: `com.cineswipe.app`
+- Primary navigation: Discover, Social, Library, Profile
+- Discover uses the product-defining four-direction interaction:
+  - left = Pass
+  - right = Like
+  - up = Watchlist
+  - down = Details
+- TMDB and Supabase are intentionally not connected yet.
+- This project is completely separate from Radix Automations.
 
-## Roadmap
-See ROADMAP.md.
+## Run locally
 
-## Development rule
-Repository documentation is the source of truth. When implementation decisions change, update the relevant documentation with the code change.
+```bash
+npm install
+npx expo start
+```
+
+Then open the Android project with Expo Go or an Android emulator.
+
+## Source of truth
+
+Product and UX requirements live in `ROADMAP.md` and `docs/`. The approved Figma concept remains the visual reference for implementation.

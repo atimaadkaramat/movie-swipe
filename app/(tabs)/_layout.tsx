@@ -10,12 +10,17 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: "rgba(12,14,20,0.96)",
+          backgroundColor: "rgba(12,14,20,0.98)",
           borderTopColor: colors.border,
+          borderTopWidth: 1,
           height: 72,
           paddingTop: 8,
           paddingBottom: 12,
+          display: "flex",
+          zIndex: 100,
+          elevation: 20,
         },
+        tabBarHideOnKeyboard: false,
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
       }}
     >

@@ -54,18 +54,17 @@ Goal: establish the mobile design system.
 Exit: approved Figma concept is the visual source of truth; implementation begins with Phase 2.
 
 ## Phase 2 — Project & Infrastructure
-Goal: establish the independent Android project.
-- [ ] Initialize Expo + React Native + TypeScript.
-- [ ] Configure Expo Router.
-- [ ] Configure styling/component system.
-- [ ] Configure linting/formatting.
-- [ ] Connect GitHub.
-- [ ] Connect dedicated Supabase project.
-- [ ] Configure environment variables.
-- [ ] Configure Android application ID.
-- [ ] Run first development build on a physical Android device.
 
-Exit: app launches on Android; no Radix credentials/configuration exists.
+- [x] Create dedicated Android-first Expo + React Native + TypeScript foundation.
+- [x] Set Android application ID to `com.cineswipe.app`.
+- [x] Establish Expo Router navigation shell.
+- [x] Add Discover, Social, Library, and Profile navigation surfaces.
+- [x] Establish reusable cinematic design tokens.
+- [x] Add local mock movie data and a functional four-direction swipe prototype.
+- [ ] Connect the project to the GitHub development workflow and validate Android build.
+- [ ] Configure Supabase client for the dedicated CineSwipe project without committing secrets.
+- [ ] Configure TMDB integration boundary.
+
 
 ## Phase 3 — Authentication
 - [ ] Sign up.

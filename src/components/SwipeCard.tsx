@@ -6,7 +6,7 @@ import type { Movie } from "../data/mockMovies";
 
 export type SwipeAction = "pass" | "like" | "watchlist" | "details";
 
-export function SwipeCard({ movie, onAction, stackIndex = 0 }: { movie: Movie; onAction: (action: SwipeAction) => void; stackIndex?: number }) {
+export function SwipeCard({ movie, onAction, stackIndex = 0, match }: { movie: Movie; onAction: (action: SwipeAction) => void; stackIndex?: number; match?: number }) {
   const { width, height } = useWindowDimensions();
   const xThreshold = width * 0.25;
   const yThreshold = height * 0.16;
@@ -47,8 +47,8 @@ export function SwipeCard({ movie, onAction, stackIndex = 0 }: { movie: Movie; o
       <Animated.View style={[styles.badge, styles.pass, {opacity:passOpacity}]}><MaterialCommunityIcons name="close" size={18} color={colors.pass}/><Text style={[styles.action,{color:colors.pass}]}>PASS</Text></Animated.View>
       <Animated.View style={[styles.badge, styles.watch, {opacity:watchlistOpacity}]}><MaterialCommunityIcons name="bookmark" size={18} color={colors.watchlist}/><Text style={[styles.action,{color:colors.watchlist}]}>WATCHLIST</Text></Animated.View>
       <Animated.View style={[styles.badge, styles.details, {opacity:detailsOpacity}]}><MaterialCommunityIcons name="information-outline" size={18} color={colors.details}/><Text style={[styles.action,{color:colors.details}]}>DETAILS</Text></Animated.View>
-      <View style={styles.match}><Text style={styles.matchText}>{movie.match}% MATCH</Text></View>
-      <View style={styles.info}><Text style={styles.title}>{movie.title}</Text><Text style={styles.meta}>{movie.year}  •  {movie.genres.join("  •  ")}</Text><Text style={styles.rating}>★ {movie.rating.toFixed(1)}</Text></View>
+      {stackIndex === 0 && <View style={styles.match}><Text style={styles.matchText}>{match ?? movie.match}% MATCH</Text></View>}
+      {stackIndex === 0 && <View style={styles.info}><Text style={styles.title}>{movie.title}</Text><Text style={styles.meta}>{movie.year}  •  {movie.genres.join("  •  ")}</Text><Text style={styles.rating}>★ {movie.rating.toFixed(1)}</Text></View>}
     </View>
   </Animated.View>;
 }

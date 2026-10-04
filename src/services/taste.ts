@@ -63,3 +63,32 @@ export async function getTasteSummary() {
     topGenres,
   };
 }
+
+
+export async function getMovieMatch(movie: Movie): Promise<number> {
+  const events = await readEvents();
+  if (events.length === 0) return 70;
+
+  const genreScores = new Map<string, number>();
+  for (const event of events) {
+    const weight =
+      event.action === "like" ? 1 :
+      event.action === "watchlist" ? 0.5 : -1;
+
+    for (const genre of event.movie.genres) {
+      genreScores.set(genre, (genreScores.get(genre) ?? 0) + weight);
+    }
+  }
+
+  const signals = movie.genres
+    .map((genre) => genreScores.get(genre) ?? 0);
+
+  if (!signals.length) return 70;
+
+  const average = signals.reduce((sum, value) => sum + value, 0) / signals.length;
+  const confidence = Math.min(events.length / 8, 1);
+  const raw = 70 + Math.max(-1, Math.min(1, average)) * 24;
+  const score = 70 + (raw - 70) * confidence;
+
+  return Math.round(Math.max(40, Math.min(96, score)));
+}

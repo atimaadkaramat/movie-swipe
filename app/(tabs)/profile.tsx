@@ -39,7 +39,7 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.root}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.avatar}>
           <MaterialCommunityIcons name="account" size={42} color={colors.accent} />
@@ -84,7 +84,19 @@ export default function Profile() {
           </Text>
         </View>
       </View>
-    </View>
+
+      <Pressable
+        style={styles.logout}
+        onPress={() => {
+          void signOut().then(() => router.replace("/"));
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Log out"
+      >
+        <MaterialCommunityIcons name="logout" size={18} color={colors.pass} />
+        <Text style={styles.logoutText}>LOG OUT</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 

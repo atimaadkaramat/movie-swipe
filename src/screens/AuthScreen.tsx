@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { colors } from "../theme";
-import { getSession, signIn, signUp } from "../services/auth";
+import { getSession, sendPasswordReset, signIn, signUp } from "../services/auth";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -10,12 +10,26 @@ export function AuthScreen() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [resetMode, setResetMode] = useState(false);
 
   useEffect(() => {
     void getSession().then((session) => {
       if (session) router.replace("/(tabs)/discover");
     });
   }, []);
+
+  async function resetPassword() {
+    setMessage("");
+    if (!email.trim()) { setMessage("Enter your email address first."); return; }
+    setBusy(true);
+    try {
+      const result = await sendPasswordReset(email);
+      if (result.error) throw result.error;
+      setMessage("Password reset email sent. Check your inbox.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not send the reset email.");
+    } finally { setBusy(false); }
+  }
 
   async function submit() {
     setMessage("");
@@ -48,7 +62,7 @@ export function AuthScreen() {
       <View style={styles.glow} />
       <View style={styles.content}>
         <Text style={styles.logo}>CINESWIPE</Text>
-        <Text style={styles.title}>{mode === "login" ? "Welcome back." : "Find your movie taste."}</Text>
+        <Text style={styles.title}>{resetMode ? "Reset your password." : mode === "login" ? "Welcome back." : "Find your movie taste."}</Text>
         <Text style={styles.subtitle}>
           Swipe movies. Build your taste. Find people who get your cinema.
         </Text>
@@ -79,9 +93,9 @@ export function AuthScreen() {
             {busy ? <ActivityIndicator color="#111319" /> : <Text style={styles.primaryText}>{mode === "login" ? "LOG IN" : "CREATE ACCOUNT"}</Text>}
           </Pressable>
 
-          <Pressable onPress={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
+          {mode === "login" && !resetMode ? <Pressable onPress={() => { setResetMode(true); setMessage(""); }}>\n            <Text style={styles.switch}>Forgot your password?</Text>\n          </Pressable> : null}\n\n          <Pressable onPress={() => { setResetMode(false); setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
             <Text style={styles.switch}>
-              {mode === "login" ? "New to CineSwipe? Create an account" : "Already have an account? Log in"}
+              {resetMode ? "Back to login" : mode === "login" ? "New to CineSwipe? Create an account" : "Already have an account? Log in"}
             </Text>
           </Pressable>
         </View>

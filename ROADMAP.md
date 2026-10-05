@@ -117,11 +117,11 @@ Exit: open app → see movie → swipe → action persists → next movie appear
 
 ## Phase 6 — Library
 - [x] Watchlist.
-- [ ] Liked.
+- [x] Liked.
 - [ ] Wishlist.
 - [ ] Watched.
 - [ ] Rated.
-- [ ] Filters.
+- [x] Filters.
 - [ ] Sorting.
 - [ ] Pagination.
 - [x] Watchlist reads the synced movie action history.

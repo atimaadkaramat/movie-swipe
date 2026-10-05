@@ -24,32 +24,46 @@ export function DiscoverScreen() {
   const [index, setIndex] = useState(0);
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [matches, setMatches] = useState<Record<string, number>>({});
+  const pageRef = useRef(0);
   const feedbackOpacity = useRef(new Animated.Value(0)).current;
   const feedbackScale = useRef(new Animated.Value(0.82)).current;
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
+  async function loadPage(page: number, replace: boolean) {
+    if (page === 1) setLoading(true);
+    else setLoadingMore(true);
+    setError(false);
 
-    fetchDiscoverMovies()
-      .then((items) => {
-        if (mounted && items.length > 0) {
-          setMovies(items);
-        }
-      })
-      .catch(() => {
-        if (mounted) setError(true);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+    try {
+      const result = await fetchDiscoverMovies(page);
+      setHasMore(result.page < result.totalPages);
+      pageRef.current = result.page;
+
+      setMovies((current) => {
+        if (replace) return result.movies.length ? result.movies : current;
+        const seen = new Set(current.map((movie) => movie.id));
+        return [...current, ...result.movies.filter((movie) => !seen.has(movie.id))];
       });
+    } catch {
+      setError(true);
+    } finally {
+      if (page === 1) setLoading(false);
+      else setLoadingMore(false);
+    }
+  }
 
-    return () => {
-      mounted = false;
-    };
+  useEffect(() => {
+    void loadPage(1, true);
   }, []);
+
+  useEffect(() => {
+    if (!hasMore || loadingMore || movies.length - index > 5) return;
+    void loadPage(pageRef.current + 1, false);
+  }, [index, movies.length, hasMore, loadingMore]);
 
   useEffect(() => {
     let mounted = true;
@@ -78,12 +92,12 @@ export function DiscoverScreen() {
     };
   }, []);
 
-  const currentIndex = index % movies.length;
-  const movie = movies[currentIndex];
-  const nextMovie = movies[(currentIndex + 1) % movies.length];
-  const nextNextMovie = movies[(currentIndex + 2) % movies.length];
+  const movie = movies[index];
+  const nextMovie = movies[index + 1];
+  const nextNextMovie = movies[index + 2];
 
   const handleAction = (action: SwipeAction) => {
+    if (!movie) return;
     const selectedMovie = movie;
 
     setLastAction(action);
@@ -129,7 +143,7 @@ export function DiscoverScreen() {
         }
         await recordTasteAction(selectedMovie, action);
       } catch {
-        // Discovery must remain usable even if local persistence fails.
+        // Discovery remains usable if local persistence fails.
       }
     })();
   };
@@ -137,12 +151,23 @@ export function DiscoverScreen() {
   if (!movie) {
     return (
       <View style={styles.center}>
-        <MaterialCommunityIcons name="movie-off-outline" size={42} color={colors.muted} />
-        <Text style={styles.emptyTitle}>No movies available</Text>
-        <Text style={styles.emptyBody}>We couldn't load a discovery queue.</Text>
-        <Pressable style={styles.retry} onPress={() => router.replace("/(tabs)/discover")}>
-          <Text style={styles.retryText}>RETRY</Text>
-        </Pressable>
+        {loadingMore || (hasMore && !error) ? (
+          <>
+            <ActivityIndicator color={colors.accent} size="large" />
+            <Text style={styles.emptyBody}>Loading more movies…</Text>
+          </>
+        ) : (
+          <>
+            <MaterialCommunityIcons name="movie-off-outline" size={42} color={colors.muted} />
+            <Text style={styles.emptyTitle}>No more movies</Text>
+            <Text style={styles.emptyBody}>
+              We reached the end of the available discovery queue.
+            </Text>
+            <Pressable style={styles.retry} onPress={() => router.replace("/(tabs)/discover")}>
+              <Text style={styles.retryText}>RETRY</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     );
   }
@@ -217,14 +242,14 @@ export function DiscoverScreen() {
           {"\n"}↑ WATCHLIST   •   ↓ DETAILS
         </Text>
 
-        {loading && (
+        {(loading || loadingMore) && (
           <View style={styles.status}>
             <ActivityIndicator color={colors.accent} />
-            <Text style={styles.statusText}>Loading movies…</Text>
+            <Text style={styles.statusText}>{loading ? "Loading movies…" : "Loading more…"}</Text>
           </View>
         )}
 
-        {error && !loading && (
+        {error && !loading && !loadingMore && (
           <View style={styles.offline}>
             <Text style={styles.statusText}>TMDB unavailable · using local fallback</Text>
           </View>
@@ -376,11 +401,7 @@ const styles = StyleSheet.create({
     elevation: 18,
     zIndex: 50,
   },
-  feedbackText: {
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.4,
-  },
+  feedbackText: { fontSize: 11, fontWeight: "900", letterSpacing: 1.4 },
   status: { position: "absolute", top: 68, alignItems: "center", gap: 6 },
   statusText: { color: colors.secondary, fontSize: 11 },
   offline: {

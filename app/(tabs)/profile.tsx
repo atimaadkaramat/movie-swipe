@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getTasteSummary } from "../../src/services/taste";
 import { getWatchlist } from "../../src/services/library";
@@ -22,6 +22,7 @@ export default function Profile() {
   const [watchlistCount, setWatchlistCount] = useState(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setProfileError("");
@@ -38,6 +39,12 @@ export default function Profile() {
       setProfileError(error instanceof Error ? error.message : "Could not load your profile.");
     }
   }, []);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   useFocusEffect(useCallback(() => {
     void load();
@@ -67,7 +74,12 @@ export default function Profile() {
   const bio = profile?.bio || "Every swipe helps CineSwipe understand your movie taste.";
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={colors.accent} />}
+    >
       <View style={styles.hero}>
         <View style={styles.avatar}>
           <MaterialCommunityIcons name="account" size={42} color={colors.accent} />

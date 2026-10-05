@@ -4,7 +4,7 @@ Android-first social movie discovery app.
 
 ## Current implementation
 
-Phase 2 foundation is being built with Expo + React Native + TypeScript.
+Phase 4 (TMDB movie data) is in progress with Expo + React Native + TypeScript.
 
 - Android application ID: `com.cineswipe.app`
 - Primary navigation: Discover, Social, Library, Profile
@@ -13,8 +13,9 @@ Phase 2 foundation is being built with Expo + React Native + TypeScript.
   - right = Like
   - up = Watchlist
   - down = Details
-- TMDB and Supabase are intentionally not connected yet.
-- This project is completely separate from Radix Automations.
+- Authentication and user profiles use the CineSwipe Supabase project.
+- TMDB powers the movie discovery and details data.
+- CineSwipe is completely separate from Radix Automations and its Neon database.
 
 ## Run locally
 
@@ -31,6 +32,29 @@ Product and UX requirements live in `ROADMAP.md` and `docs/`. The approved Figma
 
 ## TMDB setup
 
-CineSwipe now uses TMDB for the Discover feed. Create a local `.env` file from `.env.example` and set `EXPO_PUBLIC_TMDB_ACCESS_TOKEN` to your TMDB API Read Access Token. Never commit the real token to GitHub.
+Create a local `.env` file from `.env.example` and set:
 
-The Discover feed uses TMDB movie discovery with India region metadata and falls back to the local demo movie if TMDB is unavailable.
+```text
+EXPO_PUBLIC_TMDB_ACCESS_TOKEN=your_tmdb_api_read_access_token
+```
+
+Never commit the real token to GitHub.
+
+The current TMDB integration supports:
+
+- Popular discovery feed
+- Paginated discovery
+- Trending movies
+- Movie search service
+- Genre list and genre discovery service
+- Similar movies service
+- Movie details
+- India region metadata
+- Poster/backdrop image URLs
+- Graceful local fallback when TMDB is unavailable
+
+The direct TMDB client token is an interim development implementation. Before production release, move privileged API access behind a server-side proxy or equivalent protected architecture.
+
+## Data boundaries
+
+CineSwipe uses Supabase for authentication and user data. Radix Automations uses a separate Neon PostgreSQL database. These projects must remain isolated.

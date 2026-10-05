@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { fetchMovieCredits, fetchMovieDetails, fetchSimilarMovies, type MovieCredit } from "../services/tmdb";
-import { getMovieMatch, getTasteEvents, recordTasteAction, type TasteAction } from "../services/taste";
+import { getMovieMatch, getTasteEvents, rateMovie, recordTasteAction, type TasteAction } from "../services/taste";
 import type { Movie } from "../data/mockMovies";
 import { colors } from "../theme";
 
@@ -15,6 +15,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   const [credits, setCredits] = useState<MovieCredit[]>([]);
   const [similar, setSimilar] = useState<Movie[]>([]);
   const [selectedAction, setSelectedAction] = useState<TasteAction | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -22,7 +23,6 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-
     Promise.all([
       fetchMovieDetails(movieId),
       fetchMovieCredits(movieId).catch(() => [] as MovieCredit[]),
@@ -36,19 +36,13 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
         setSimilar(similarMovies.slice(0, 12));
         const current = events.find((event) => event.movieId === item.id);
         setSelectedAction(current?.action ?? null);
+        setSelectedRating(current?.rating ?? null);
         const score = await getMovieMatch(item);
         if (mounted) setMatch(score);
       })
-      .catch(() => {
-        if (mounted) setMovie(null);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
+      .catch(() => { if (mounted) setMovie(null); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, [movieId, retryKey]);
 
   async function chooseAction(action: TasteAction) {
@@ -57,19 +51,25 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
     try {
       await recordTasteAction(movie, action);
       setSelectedAction(action);
+      if (action !== "watched") setSelectedRating(null);
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} size="large" />
-        <Text style={styles.loading}>Loading movie details…</Text>
-      </View>
-    );
+  async function chooseRating(rating: number) {
+    if (!movie || saving) return;
+    setSaving(true);
+    try {
+      await rateMovie(movie, rating);
+      setSelectedAction("watched");
+      setSelectedRating(rating);
+    } finally {
+      setSaving(false);
+    }
   }
+
+  if (loading) return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /><Text style={styles.loading}>Loading movie details…</Text></View>;
 
   if (!movie) {
     return (
@@ -78,12 +78,8 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
         <Text style={styles.errorTitle}>Couldn’t load this movie</Text>
         <Text style={styles.errorBody}>Check your connection and try again.</Text>
         <View style={styles.errorActions}>
-          <Pressable style={styles.retry} onPress={() => setRetryKey((value) => value + 1)}>
-            <Text style={styles.retryText}>TRY AGAIN</Text>
-          </Pressable>
-          <Pressable style={styles.secondaryAction} onPress={() => router.back()}>
-            <Text style={styles.secondaryActionText}>GO BACK</Text>
-          </Pressable>
+          <Pressable style={styles.retry} onPress={() => setRetryKey((value) => value + 1)}><Text style={styles.retryText}>TRY AGAIN</Text></Pressable>
+          <Pressable style={styles.secondaryAction} onPress={() => router.back()}><Text style={styles.secondaryActionText}>GO BACK</Text></Pressable>
         </View>
       </View>
     );
@@ -98,31 +94,15 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
         <View style={styles.hero}>
           {movie.backdrop ? <Image source={{ uri: movie.backdrop }} style={styles.backdrop} resizeMode="cover" /> : null}
           <LinearGradient colors={["rgba(8,9,13,0.04)", "rgba(8,9,13,0.30)", colors.background]} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFillObject} />
-          <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back">
-            <MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} />
-          </Pressable>
-          <View style={styles.heroContent}>
-            <Text style={styles.kicker}>MOVIE DEEP DIVE</Text>
-            <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.meta}>{movie.year} • {movie.genres.join(" • ")}</Text>
-          </View>
+          <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back"><MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} /></Pressable>
+          <View style={styles.heroContent}><Text style={styles.kicker}>MOVIE DEEP DIVE</Text><Text style={styles.title}>{movie.title}</Text><Text style={styles.meta}>{movie.year} • {movie.genres.join(" • ")}</Text></View>
         </View>
 
         <View style={styles.posterRow}>
           {movie.poster ? <Image source={{ uri: movie.poster }} style={styles.poster} /> : null}
           <View style={styles.stats}>
-            <View style={styles.matchCard}>
-              <Text style={styles.statLabel}>YOUR TASTE MATCH</Text>
-              <Text style={styles.matchValue}>{match}%</Text>
-              <Text style={styles.statHint}>Based on your current taste profile</Text>
-            </View>
-            <View style={styles.ratingCard}>
-              <Text style={styles.statLabel}>TMDB RATING</Text>
-              <View style={styles.ratingRow}>
-                <MaterialCommunityIcons name="star" size={16} color={colors.watchlist} />
-                <Text style={styles.ratingValue}>{movie.rating.toFixed(1)}</Text>
-              </View>
-            </View>
+            <View style={styles.matchCard}><Text style={styles.statLabel}>YOUR TASTE MATCH</Text><Text style={styles.matchValue}>{match}%</Text><Text style={styles.statHint}>Based on your current taste profile</Text></View>
+            <View style={styles.ratingCard}><Text style={styles.statLabel}>TMDB RATING</Text><View style={styles.ratingRow}><MaterialCommunityIcons name="star" size={16} color={colors.watchlist} /><Text style={styles.ratingValue}>{movie.rating.toFixed(1)}</Text></View></View>
           </View>
         </View>
 
@@ -131,95 +111,43 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
           <ActionButton icon="heart" label="LIKE" active={selectedAction === "like"} color={colors.like} onPress={() => void chooseAction("like")} />
           <ActionButton icon="bookmark" label="SAVE" active={selectedAction === "watchlist"} color={colors.watchlist} onPress={() => void chooseAction("watchlist")} />
         </View>
+        <Pressable style={[styles.watchedButton, selectedAction === "watched" && styles.watchedActive]} onPress={() => void chooseAction("watched")}>
+          <MaterialCommunityIcons name="check-circle-outline" size={19} color={colors.accent} />
+          <Text style={styles.watchedText}>{selectedAction === "watched" ? "WATCHED" : "MARK AS WATCHED"}</Text>
+        </Pressable>
 
-        {saving ? <Text style={styles.saving}>Saving your preference…</Text> : null}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About the movie</Text>
-          <Text style={styles.synopsis}>{movie.synopsis || "No synopsis is available for this title."}</Text>
-        </View>
-
-        {cast.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Cast</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-              {cast.map((person) => (
-                <View key={person.id + person.name} style={styles.personCard}>
-                  {person.profilePath ? <Image source={{ uri: person.profilePath }} style={styles.personImage} /> : <View style={styles.personPlaceholder}><MaterialCommunityIcons name="account" size={24} color={colors.muted} /></View>}
-                  <Text style={styles.personName} numberOfLines={2}>{person.name}</Text>
-                  <Text style={styles.personRole} numberOfLines={2}>{person.character || "Cast"}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {crew.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Crew</Text>
-            <View style={styles.crewWrap}>
-              {crew.map((person) => (
-                <View key={person.id + (person.job ?? "")} style={styles.crewChip}>
-                  <Text style={styles.crewName}>{person.name}</Text>
-                  <Text style={styles.crewJob}>{person.job}</Text>
-                </View>
+        {selectedAction === "watched" ? (
+          <View style={styles.ratingSection}>
+            <Text style={styles.sectionTitle}>Rate this movie</Text>
+            <Text style={styles.ratingHint}>Your rating helps CineSwipe learn your taste.</Text>
+            <View style={styles.ratingButtons}>
+              {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+                <Pressable key={value} onPress={() => void chooseRating(value)} style={[styles.ratingButton, selectedRating === value && styles.ratingButtonActive]}>
+                  <Text style={[styles.ratingButtonText, selectedRating === value && styles.ratingButtonTextActive]}>{value}</Text>
+                </Pressable>
               ))}
             </View>
           </View>
-        )}
+        ) : null}
 
-        {similar.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Similar movies</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-              {similar.map((item) => (
-                <Pressable key={item.id} style={styles.similarCard} onPress={() => router.push({ pathname: "/movie/[id]", params: { id: item.id } })}>
-                  {item.poster ? <Image source={{ uri: item.poster }} style={styles.similarPoster} /> : <View style={styles.similarPoster} />}
-                  <Text style={styles.similarTitle} numberOfLines={2}>{item.title}</Text>
-                  <Text style={styles.similarMeta}>{item.year} • {item.rating.toFixed(1)}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        {saving ? <Text style={styles.saving}>Saving your preference…</Text> : null}
 
-        <View style={styles.gestureCard}>
-          <MaterialCommunityIcons name="gesture-swipe" size={22} color={colors.accent} />
-          <View style={styles.gestureCopy}>
-            <Text style={styles.gestureTitle}>Ready to decide?</Text>
-            <Text style={styles.gestureBody}>Swipe down to return to Discover and keep exploring.</Text>
-          </View>
-        </View>
+        <View style={styles.section}><Text style={styles.sectionTitle}>About the movie</Text><Text style={styles.synopsis}>{movie.synopsis || "No synopsis is available for this title."}</Text></View>
+
+        {cast.length > 0 && <View style={styles.section}><Text style={styles.sectionTitle}>Cast</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>{cast.map((person) => <View key={person.id + person.name} style={styles.personCard}>{person.profilePath ? <Image source={{ uri: person.profilePath }} style={styles.personImage} /> : <View style={styles.personPlaceholder}><MaterialCommunityIcons name="account" size={24} color={colors.muted} /></View>}<Text style={styles.personName} numberOfLines={2}>{person.name}</Text><Text style={styles.personRole} numberOfLines={2}>{person.character || "Cast"}</Text></View>)}</ScrollView></View>}
+
+        {crew.length > 0 && <View style={styles.section}><Text style={styles.sectionTitle}>Crew</Text><View style={styles.crewWrap}>{crew.map((person) => <View key={person.id + (person.job ?? "")} style={styles.crewChip}><Text style={styles.crewName}>{person.name}</Text><Text style={styles.crewJob}>{person.job}</Text></View>)}</View></View>}
+
+        {similar.length > 0 && <View style={styles.section}><Text style={styles.sectionTitle}>Similar movies</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>{similar.map((item) => <Pressable key={item.id} style={styles.similarCard} onPress={() => router.push({ pathname: "/movie/[id]", params: { id: item.id } })}>{item.poster ? <Image source={{ uri: item.poster }} style={styles.similarPoster} /> : <View style={styles.similarPoster} />}<Text style={styles.similarTitle} numberOfLines={2}>{item.title}</Text><Text style={styles.similarMeta}>{item.year} • {item.rating.toFixed(1)}</Text></Pressable>)}</ScrollView></View>}
+
+        <View style={styles.gestureCard}><MaterialCommunityIcons name="gesture-swipe" size={22} color={colors.accent} /><View style={styles.gestureCopy}><Text style={styles.gestureTitle}>Ready to decide?</Text><Text style={styles.gestureBody}>Swipe down to return to Discover and keep exploring.</Text></View></View>
       </ScrollView>
     </View>
   );
 }
 
-function ActionButton({
-  icon,
-  label,
-  active,
-  color,
-  onPress,
-}: {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  label: string;
-  active: boolean;
-  color: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.actionButton,
-        { borderColor: active ? color : colors.border, backgroundColor: active ? color + "18" : colors.surface },
-      ]}
-    >
-      <MaterialCommunityIcons name={icon} size={19} color={color} />
-      <Text style={[styles.actionLabel, { color }]}>{label}</Text>
-    </Pressable>
-  );
+function ActionButton({ icon, label, active, color, onPress }: { icon: keyof typeof MaterialCommunityIcons.glyphMap; label: string; active: boolean; color: string; onPress: () => void }) {
+  return <Pressable onPress={onPress} style={[styles.actionButton, { borderColor: active ? color : colors.border, backgroundColor: active ? color + "18" : colors.surface }]}><MaterialCommunityIcons name={icon} size={19} color={color} /><Text style={[styles.actionLabel, { color }]}>{label}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
@@ -254,6 +182,16 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: 9, paddingHorizontal: 20, marginTop: 18 },
   actionButton: { flex: 1, minHeight: 48, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: 3 },
   actionLabel: { fontSize: 9, fontWeight: "900", letterSpacing: 1 },
+  watchedButton: { marginHorizontal: 20, marginTop: 9, minHeight: 46, borderRadius: 15, borderWidth: 1, borderColor: "rgba(208,188,255,.18)", backgroundColor: "rgba(208,188,255,.07)", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 7 },
+  watchedActive: { borderColor: colors.accent, backgroundColor: "rgba(208,188,255,.13)" },
+  watchedText: { color: colors.accent, fontSize: 10, fontWeight: "900", letterSpacing: 1 },
+  ratingSection: { marginHorizontal: 20, marginTop: 18, padding: 15, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  ratingHint: { color: colors.secondary, fontSize: 11, marginTop: 5 },
+  ratingButtons: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 12 },
+  ratingButton: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
+  ratingButtonActive: { borderColor: colors.accent, backgroundColor: "rgba(208,188,255,.14)" },
+  ratingButtonText: { color: colors.muted, fontSize: 10, fontWeight: "800" },
+  ratingButtonTextActive: { color: colors.accent },
   saving: { color: colors.muted, fontSize: 10, textAlign: "center", marginTop: 7 },
   section: { paddingHorizontal: 20, marginTop: 28 },
   sectionTitle: { color: colors.text, fontSize: 19, fontWeight: "900" },

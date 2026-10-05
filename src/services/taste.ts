@@ -19,17 +19,47 @@ type RemoteAction = {
 };
 
 const ACTIONS_KEY = "@cineswipe/taste-actions";
+const LEGACY_WATCHLIST_KEY = "@cineswipe/watchlist";
 let mutationQueue: Promise<void> = Promise.resolve();
 let remoteSyncPromise: Promise<void> | null = null;
 
 async function readLocalEvents(): Promise<TasteEvent[]> {
   const raw = await AsyncStorage.getItem(ACTIONS_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as TasteEvent[];
-  } catch {
-    return [];
+  let events: TasteEvent[] = [];
+
+  if (raw) {
+    try {
+      events = JSON.parse(raw) as TasteEvent[];
+    } catch {
+      events = [];
+    }
   }
+
+  const legacyRaw = await AsyncStorage.getItem(LEGACY_WATCHLIST_KEY);
+  if (legacyRaw) {
+    try {
+      const legacyMovies = JSON.parse(legacyRaw) as Movie[];
+      const known = new Set(events.map((event) => event.movieId));
+      const legacyEvents = legacyMovies
+        .filter((movie) => !known.has(movie.id))
+        .map((movie) => ({
+          movieId: movie.id,
+          action: "watchlist" as const,
+          movie,
+          createdAt: new Date().toISOString(),
+        }));
+
+      if (legacyEvents.length) {
+        events = [...events, ...legacyEvents];
+        await writeLocalEvents(events);
+        await AsyncStorage.removeItem(LEGACY_WATCHLIST_KEY);
+      }
+    } catch {
+      // Ignore malformed legacy storage.
+    }
+  }
+
+  return events;
 }
 
 async function writeLocalEvents(events: TasteEvent[]) {

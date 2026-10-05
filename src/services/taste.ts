@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Movie } from "../data/mockMovies";
+import { supabase } from "./supabase";
 
 export type TasteAction = "like" | "pass" | "watchlist";
 
@@ -10,10 +11,18 @@ export type TasteEvent = {
   createdAt: string;
 };
 
+type RemoteAction = {
+  movie_id: string;
+  action: TasteAction;
+  movie_snapshot: Movie | null;
+  created_at: string;
+};
+
 const ACTIONS_KEY = "@cineswipe/taste-actions";
 let mutationQueue: Promise<void> = Promise.resolve();
+let remoteSyncPromise: Promise<void> | null = null;
 
-async function readEvents(): Promise<TasteEvent[]> {
+async function readLocalEvents(): Promise<TasteEvent[]> {
   const raw = await AsyncStorage.getItem(ACTIONS_KEY);
   if (!raw) return [];
   try {
@@ -23,15 +32,133 @@ async function readEvents(): Promise<TasteEvent[]> {
   }
 }
 
+async function writeLocalEvents(events: TasteEvent[]) {
+  await AsyncStorage.setItem(ACTIONS_KEY, JSON.stringify(events));
+}
+
+async function getAuthenticatedUserId() {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+}
+
+async function syncLocalEventsToRemote(userId: string) {
+  if (!supabase) return;
+
+  const local = await readLocalEvents();
+  if (!local.length) return;
+
+  const rows = local.map((event) => ({
+    user_id: userId,
+    movie_id: event.movieId,
+    action: event.action,
+    movie_snapshot: event.movie,
+    created_at: event.createdAt,
+  }));
+
+  const { error } = await supabase
+    .from("movie_actions")
+    .upsert(rows, { onConflict: "user_id,movie_id" });
+
+  if (error) throw error;
+}
+
+async function ensureRemoteSync(userId: string) {
+  if (!remoteSyncPromise) {
+    remoteSyncPromise = syncLocalEventsToRemote(userId).finally(() => {
+      remoteSyncPromise = null;
+    });
+  }
+  await remoteSyncPromise;
+}
+
+async function readRemoteEvents(userId: string): Promise<TasteEvent[]> {
+  if (!supabase) return [];
+
+  await ensureRemoteSync(userId);
+
+  const { data, error } = await supabase
+    .from("movie_actions")
+    .select("movie_id, action, movie_snapshot, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return ((data ?? []) as RemoteAction[])
+    .filter((event) => event.movie_snapshot)
+    .map((event) => ({
+      movieId: event.movie_id,
+      action: event.action,
+      movie: event.movie_snapshot as Movie,
+      createdAt: event.created_at,
+    }));
+}
+
+async function readEvents(): Promise<TasteEvent[]> {
+  const userId = await getAuthenticatedUserId();
+  if (userId && supabase) {
+    try {
+      return await readRemoteEvents(userId);
+    } catch {
+      // Keep the app usable if the network/database is temporarily unavailable.
+    }
+  }
+  return readLocalEvents();
+}
+
 export function recordTasteAction(movie: Movie, action: TasteAction): Promise<void> {
   mutationQueue = mutationQueue.then(async () => {
-    const events = await readEvents();
-    const next = [
-      ...events.filter((event) => event.movieId !== movie.id),
-      { movieId: movie.id, action, movie, createdAt: new Date().toISOString() },
-    ];
-    await AsyncStorage.setItem(ACTIONS_KEY, JSON.stringify(next));
+    const event: TasteEvent = {
+      movieId: movie.id,
+      action,
+      movie,
+      createdAt: new Date().toISOString(),
+    };
+
+    const events = await readLocalEvents();
+    await writeLocalEvents([
+      ...events.filter((item) => item.movieId !== movie.id),
+      event,
+    ]);
+
+    const userId = await getAuthenticatedUserId();
+    if (!userId || !supabase) return;
+
+    const { error } = await supabase.from("movie_actions").upsert(
+      {
+        user_id: userId,
+        movie_id: movie.id,
+        action,
+        movie_snapshot: movie,
+        created_at: event.createdAt,
+      },
+      { onConflict: "user_id,movie_id" },
+    );
+
+    if (error) throw error;
   });
+
+  return mutationQueue;
+}
+
+export function removeTasteAction(movieId: string): Promise<void> {
+  mutationQueue = mutationQueue.then(async () => {
+    const events = await readLocalEvents();
+    await writeLocalEvents(events.filter((event) => event.movieId !== movieId));
+
+    const userId = await getAuthenticatedUserId();
+    if (!userId || !supabase) return;
+
+    const { error } = await supabase
+      .from("movie_actions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("movie_id", movieId);
+
+    if (error) throw error;
+  });
+
   return mutationQueue;
 }
 
@@ -68,7 +195,6 @@ export async function getTasteSummary() {
   };
 }
 
-
 export async function getMovieMatch(movie: Movie): Promise<number> {
   const events = await readEvents();
   if (events.length === 0) return 70;
@@ -84,9 +210,7 @@ export async function getMovieMatch(movie: Movie): Promise<number> {
     }
   }
 
-  const signals = movie.genres
-    .map((genre) => genreScores.get(genre) ?? 0);
-
+  const signals = movie.genres.map((genre) => genreScores.get(genre) ?? 0);
   if (!signals.length) return 70;
 
   const average = signals.reduce((sum, value) => sum + value, 0) / signals.length;

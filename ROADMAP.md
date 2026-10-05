@@ -63,7 +63,7 @@ Exit: approved Figma concept is the visual source of truth; implementation begin
 - [x] Add local mock movie data and a functional four-direction swipe prototype.
 - [x] Establish the GitHub development branch and Android app foundation.
 - [x] Validate the Android app on a physical Android device.
-- [ ] Configure Supabase client for the dedicated CineSwipe project without committing secrets.
+- [x] Configure the Supabase client integration without committing secrets.\n  - Runtime values are supplied through `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - [x] Configure TMDB integration boundary.
 
 
@@ -93,13 +93,13 @@ Exit: real movie data renders reliably.
 
 ## Phase 5 — Swipe Engine
 Goal: build the core CineSwipe interaction.
-- [ ] Right swipe = Like.
-- [ ] Left swipe = Pass.
-- [ ] Save/Wishlist.
-- [ ] Tap = Movie details.
+- [x] Right swipe = Like.
+- [x] Left swipe = Pass.
+- [x] Up swipe = Watchlist.
+- [x] Down swipe = Movie details.
 - [ ] Undo where appropriate.
 - [ ] Animation and haptics.
-- [ ] Persist every action.
+- [x] Persist like/pass/watchlist actions locally; Supabase persistence follows authentication.
 - [ ] Prevent duplicate/conflicting actions.
 - [ ] Discovery queue.
 

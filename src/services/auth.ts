@@ -1,10 +1,17 @@
 import { supabase } from "./supabase";
 
+const authRedirect = "cineswipe://auth/callback";
 const recoveryRedirect = "cineswipe://reset-password";
 
 export async function signUp(email: string, password: string) {
   if (!supabase) throw new Error("Supabase is not configured.");
-  return supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
+  return supabase.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password,
+    options: {
+      emailRedirectTo: authRedirect,
+    },
+  });
 }
 
 export async function signIn(email: string, password: string) {

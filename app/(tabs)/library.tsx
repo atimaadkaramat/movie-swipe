@@ -1,61 +1,72 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { getWatchlist, removeFromWatchlist } from "../../src/services/library";
+import { getTasteEvents, removeTasteAction, type TasteAction } from "../../src/services/taste";
 import type { Movie } from "../../src/data/mockMovies";
 import { colors } from "../../src/theme";
 
+type LibraryFilter = Extract<TasteAction, "watchlist" | "like" | "pass">;
+const FILTERS: { key: LibraryFilter; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
+  { key: "watchlist", label: "Saved", icon: "bookmark" },
+  { key: "like", label: "Liked", icon: "heart" },
+  { key: "pass", label: "Passed", icon: "close" },
+];
+
 export default function Library() {
+  const [filter, setFilter] = useState<LibraryFilter>("watchlist");
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [counts, setCounts] = useState<Record<LibraryFilter, number>>({ watchlist: 0, like: 0, pass: 0 });
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setMovies(await getWatchlist());
-    setLoading(false);
-  }, []);
+    try {
+      const events = await getTasteEvents();
+      setCounts({
+        watchlist: events.filter((event) => event.action === "watchlist").length,
+        like: events.filter((event) => event.action === "like").length,
+        pass: events.filter((event) => event.action === "pass").length,
+      });
+      setMovies(events.filter((event) => event.action === filter).map((event) => event.movie));
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
 
-  useFocusEffect(useCallback(() => {
-    void load();
-  }, [load]));
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
-        <Text style={styles.muted}>Loading your library…</Text>
-      </View>
-    );
-  }
+  const current = FILTERS.find((item) => item.key === filter)!;
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <View>
           <Text style={styles.kicker}>YOUR CINEMA</Text>
-          <Text style={styles.title}>Watchlist</Text>
+          <Text style={styles.title}>{current.label}</Text>
         </View>
-        <View style={styles.count}>
-          <Text style={styles.countText}>{movies.length}</Text>
-        </View>
+        <View style={styles.count}><Text style={styles.countText}>{counts[filter]}</Text></View>
       </View>
 
-      {movies.length === 0 ? (
+      <View style={styles.filters}>
+        {FILTERS.map((item) => (
+          <Pressable key={item.key} onPress={() => setFilter(item.key)} style={[styles.filter, filter === item.key && styles.filterActive]}>
+            <MaterialCommunityIcons name={item.icon} size={15} color={filter === item.key ? colors.accent : colors.muted} />
+            <Text style={[styles.filterText, filter === item.key && styles.filterTextActive]}>{item.label}</Text>
+            <Text style={styles.filterCount}>{counts[item.key]}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {loading ? (
+        <View style={styles.center}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>Loading your library…</Text></View>
+      ) : movies.length === 0 ? (
         <View style={styles.empty}>
-          <View style={styles.emptyIcon}>
-            <MaterialCommunityIcons name="bookmark-multiple-outline" size={32} color={colors.watchlist} />
-          </View>
-          <Text style={styles.emptyTitle}>Your watchlist is empty</Text>
-          <Text style={styles.muted}>Swipe ↑ on movies you want to watch later.</Text>
+          <View style={styles.emptyIcon}><MaterialCommunityIcons name={current.icon} size={32} color={colors.accent} /></View>
+          <Text style={styles.emptyTitle}>Nothing here yet</Text>
+          <Text style={styles.muted}>
+            {filter === "watchlist" ? "Swipe ↑ on movies you want to watch later." : filter === "like" ? "Swipe → on movies you want to keep." : "Passed movies will appear here."}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -67,24 +78,16 @@ export default function Library() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={styles.item}>
-              {item.poster ? (
-                <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
-              ) : (
-                <View style={[styles.poster, styles.posterFallback]}>
-                  <MaterialCommunityIcons name="movie-open-outline" size={28} color={colors.muted} />
-                </View>
-              )}
+              {item.poster ? <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" /> : <View style={[styles.poster, styles.posterFallback]}><MaterialCommunityIcons name="movie-open-outline" size={28} color={colors.muted} /></View>}
               <View style={styles.itemInfo}>
                 <Text numberOfLines={1} style={styles.movieTitle}>{item.title}</Text>
                 <Text style={styles.meta}>{item.year} • {item.rating.toFixed(1)}</Text>
                 <Pressable
                   style={styles.remove}
-                  onPress={() => {
-                    void removeFromWatchlist(item.id).then(load);
-                  }}
-                  accessibilityLabel={`Remove ${item.title} from watchlist`}
+                  onPress={() => { void removeTasteAction(item.id).then(load); }}
+                  accessibilityLabel={`Remove ${item.title} from library`}
                 >
-                  <MaterialCommunityIcons name="bookmark-remove-outline" size={16} color={colors.secondary} />
+                  <MaterialCommunityIcons name="trash-can-outline" size={16} color={colors.secondary} />
                   <Text style={styles.removeText}>REMOVE</Text>
                 </Pressable>
               </View>
@@ -98,13 +101,19 @@ export default function Library() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 18, paddingTop: 22 },
-  center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 10 },
-  muted: { color: colors.secondary, fontSize: 13 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
+  muted: { color: colors.secondary, fontSize: 13, textAlign: "center" },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   kicker: { color: colors.accent, fontSize: 9, fontWeight: "900", letterSpacing: 1.5 },
   title: { color: colors.text, fontSize: 30, fontWeight: "900", marginTop: 3 },
-  count: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,185,95,0.10)", borderWidth: 1, borderColor: "rgba(255,185,95,0.20)" },
-  countText: { color: colors.watchlist, fontSize: 15, fontWeight: "900" },
+  count: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(208,188,255,0.10)", borderWidth: 1, borderColor: "rgba(208,188,255,0.20)" },
+  countText: { color: colors.accent, fontSize: 15, fontWeight: "900" },
+  filters: { flexDirection: "row", gap: 7, marginBottom: 14 },
+  filter: { flex: 1, minHeight: 42, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 5 },
+  filterActive: { borderColor: "rgba(208,188,255,.28)", backgroundColor: "rgba(208,188,255,.08)" },
+  filterText: { color: colors.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
+  filterTextActive: { color: colors.text },
+  filterCount: { color: colors.secondary, fontSize: 9, fontWeight: "800" },
   grid: { paddingBottom: 30 },
   row: { gap: 12, marginBottom: 16 },
   item: { flex: 1, minWidth: 0 },
@@ -116,6 +125,6 @@ const styles = StyleSheet.create({
   remove: { marginTop: 7, flexDirection: "row", alignItems: "center", gap: 5 },
   removeText: { color: colors.secondary, fontSize: 9, fontWeight: "800", letterSpacing: 0.8 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 70 },
-  emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,185,95,0.08)", marginBottom: 18 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(208,188,255,0.08)", marginBottom: 18 },
   emptyTitle: { color: colors.text, fontSize: 20, fontWeight: "900" },
 });

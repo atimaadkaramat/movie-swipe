@@ -1,9 +1,11 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getTasteSummary } from "../../src/services/taste";
 import { getWatchlist } from "../../src/services/library";
+import { signOut } from "../../src/services/auth";
+import { router } from "expo-router";
 import { colors } from "../../src/theme";
 
 type Summary = {
@@ -97,7 +99,8 @@ function Stat({ icon, label, value, color }: { icon: keyof typeof MaterialCommun
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 20, paddingBottom: 36 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" },
   hero: { alignItems: "center", paddingTop: 24 },
   avatar: { width: 84, height: 84, borderRadius: 42, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(208,188,255,.10)", borderWidth: 1, borderColor: "rgba(208,188,255,.18)", marginBottom: 18 },
@@ -117,4 +120,6 @@ const styles = StyleSheet.create({
   infoCard: { flexDirection: "row", gap: 12, marginTop: 24, padding: 16, borderRadius: 20, backgroundColor: "rgba(208,188,255,.06)", borderWidth: 1, borderColor: "rgba(208,188,255,.12)" },
   infoCopy: { flex: 1 },
   infoTitle: { color: colors.text, fontSize: 14, fontWeight: "900" },
+  logout: { height: 50, borderRadius: 15, borderWidth: 1, borderColor: "rgba(255,107,117,0.24)", backgroundColor: "rgba(255,107,117,0.06)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 18 },
+  logoutText: { color: colors.pass, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
 });

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { colors } from "../theme";
-import { updateMyProfile } from "../services/profile";
+import { colors } from "../src/theme";
+import { updateMyProfile } from "../src/services/profile";
 
 export default function Onboarding() {
   const [username, setUsername] = useState("");

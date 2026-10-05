@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { fetchMovieCredits, fetchMovieDetails, fetchSimilarMovies, type MovieCredit } from "../services/tmdb";
-import { getMovieMatch, getTasteEvents, rateMovie, recordTasteAction, type TasteAction } from "../services/taste";
+import { getMovieMatch, getTasteEvents, getRatings, getWatchedMovies, markWatched, rateMovie, recordTasteAction, type TasteAction } from "../services/taste";
 import type { Movie } from "../data/mockMovies";
 import { colors } from "../theme";
 
@@ -16,6 +16,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   const [similar, setSimilar] = useState<Movie[]>([]);
   const [selectedAction, setSelectedAction] = useState<TasteAction | null>(null);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [isWatched, setIsWatched] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -28,15 +29,18 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
       fetchMovieCredits(movieId).catch(() => [] as MovieCredit[]),
       fetchSimilarMovies(movieId).then((result) => result.movies).catch(() => [] as Movie[]),
       getTasteEvents().catch(() => []),
-    ])
-      .then(async ([item, movieCredits, similarMovies, events]) => {
+      getWatchedMovies().catch(() => []),
+      getRatings().catch(() => []),
+      ])
+      .then(async ([item, movieCredits, similarMovies, events, watchedMovies, ratings]) => {
         if (!mounted) return;
         setMovie(item);
         setCredits(movieCredits);
         setSimilar(similarMovies.slice(0, 12));
         const current = events.find((event) => event.movieId === item.id);
         setSelectedAction(current?.action ?? null);
-        setSelectedRating(current?.rating ?? null);
+        setIsWatched(watchedMovies.some((watched) => watched.id === item.id));
+        setSelectedRating(ratings.find((rating) => rating.movieId === item.id)?.rating ?? null);
         const score = await getMovieMatch(item);
         if (mounted) setMatch(score);
       })
@@ -51,7 +55,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
     try {
       await recordTasteAction(movie, action);
       setSelectedAction(action);
-      if (action !== "watched") setSelectedRating(null);
+      if (action !== "watchlist") setSelectedRating(null);
     } finally {
       setSaving(false);
     }
@@ -62,7 +66,7 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
     setSaving(true);
     try {
       await rateMovie(movie, rating);
-      setSelectedAction("watched");
+      setIsWatched(true);
       setSelectedRating(rating);
     } finally {
       setSaving(false);
@@ -111,12 +115,16 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
           <ActionButton icon="heart" label="LIKE" active={selectedAction === "like"} color={colors.like} onPress={() => void chooseAction("like")} />
           <ActionButton icon="bookmark" label="SAVE" active={selectedAction === "watchlist"} color={colors.watchlist} onPress={() => void chooseAction("watchlist")} />
         </View>
-        <Pressable style={[styles.watchedButton, selectedAction === "watched" && styles.watchedActive]} onPress={() => void chooseAction("watched")}>
+        <Pressable style={[styles.watchedButton, selectedAction === "watched" && styles.watchedActive]} onPress={() => {
+          if (!movie || saving) return;
+          setSaving(true);
+          void markWatched(movie).then(() => setIsWatched(true)).finally(() => setSaving(false));
+        }}>
           <MaterialCommunityIcons name="check-circle-outline" size={19} color={colors.accent} />
-          <Text style={styles.watchedText}>{selectedAction === "watched" ? "WATCHED" : "MARK AS WATCHED"}</Text>
+          <Text style={styles.watchedText}>{isWatched ? "WATCHED" : "MARK AS WATCHED"}</Text>
         </Pressable>
 
-        {selectedAction === "watched" ? (
+        {isWatched ? (
           <View style={styles.ratingSection}>
             <Text style={styles.sectionTitle}>Rate this movie</Text>
             <Text style={styles.ratingHint}>Your rating helps CineSwipe learn your taste.</Text>

@@ -72,7 +72,7 @@ export default function Library() {
           <View style={styles.emptyIcon}><MaterialCommunityIcons name={current.icon} size={32} color={colors.accent} /></View>
           <Text style={styles.emptyTitle}>Nothing here yet</Text>
           <Text style={styles.muted}>
-            {filter === "watchlist" ? "Swipe ↑ on movies you want to watch later." : filter === "like" ? "Swipe → on movies you want to keep." : filter === "passed" ? "Passed movies will appear here." : filter === "watched" ? "Movies you have watched will appear here." : "Movies you have rated will appear here."}
+            {filter === "watchlist" ? "Swipe ↑ on movies you want to watch later." : filter === "like" ? "Swipe → on movies you want to keep." : filter === "pass" ? "Passed movies will appear here." : filter === "watched" ? "Movies you have watched will appear here." : "Movies you have rated will appear here."}
           </Text>
         </View>
       ) : (

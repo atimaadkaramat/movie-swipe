@@ -277,3 +277,9 @@ Social features begin in Phase 8. Advanced recommendations begin in Phase 9.
 
 ## Phase gate rule
 A phase is complete only when implementation works, documented requirements are satisfied, Android testing is done, no critical regression exists, and documentation is updated.
+
+
+### Persistence architecture update
+- [x] Separate movie watch history from preference actions.
+- [x] Separate movie ratings from preference actions.
+- [x] Persist watched state and ratings in Supabase with per-user RLS.

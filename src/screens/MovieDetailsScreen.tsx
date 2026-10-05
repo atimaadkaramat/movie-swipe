@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { fetchMovieCredits, fetchMovieDetails, fetchSimilarMovies, type MovieCredit } from "../services/tmdb";
-import { getMovieMatch } from "../services/taste";
+import { getMovieMatch, getTasteEvents, recordTasteAction, type TasteAction } from "../services/taste";
 import type { Movie } from "../data/mockMovies";
 import { colors } from "../theme";
 
@@ -14,7 +14,9 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   const [match, setMatch] = useState(70);
   const [credits, setCredits] = useState<MovieCredit[]>([]);
   const [similar, setSimilar] = useState<Movie[]>([]);
+  const [selectedAction, setSelectedAction] = useState<TasteAction | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
@@ -25,12 +27,15 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
       fetchMovieDetails(movieId),
       fetchMovieCredits(movieId).catch(() => [] as MovieCredit[]),
       fetchSimilarMovies(movieId).then((result) => result.movies).catch(() => [] as Movie[]),
+      getTasteEvents().catch(() => []),
     ])
-      .then(async ([item, movieCredits, similarMovies]) => {
+      .then(async ([item, movieCredits, similarMovies, events]) => {
         if (!mounted) return;
         setMovie(item);
         setCredits(movieCredits);
         setSimilar(similarMovies.slice(0, 12));
+        const current = events.find((event) => event.movieId === item.id);
+        setSelectedAction(current?.action ?? null);
         const score = await getMovieMatch(item);
         if (mounted) setMatch(score);
       })
@@ -45,6 +50,17 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
       mounted = false;
     };
   }, [movieId, retryKey]);
+
+  async function chooseAction(action: TasteAction) {
+    if (!movie || saving) return;
+    setSaving(true);
+    try {
+      await recordTasteAction(movie, action);
+      setSelectedAction(action);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -110,6 +126,14 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
           </View>
         </View>
 
+        <View style={styles.actions}>
+          <ActionButton icon="close" label="PASS" active={selectedAction === "pass"} color={colors.pass} onPress={() => void chooseAction("pass")} />
+          <ActionButton icon="heart" label="LIKE" active={selectedAction === "like"} color={colors.like} onPress={() => void chooseAction("like")} />
+          <ActionButton icon="bookmark" label="SAVE" active={selectedAction === "watchlist"} color={colors.watchlist} onPress={() => void chooseAction("watchlist")} />
+        </View>
+
+        {saving ? <Text style={styles.saving}>Saving your preference…</Text> : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About the movie</Text>
           <Text style={styles.synopsis}>{movie.synopsis || "No synopsis is available for this title."}</Text>
@@ -171,6 +195,33 @@ export function MovieDetailsScreen({ movieId }: { movieId: string }) {
   );
 }
 
+function ActionButton({
+  icon,
+  label,
+  active,
+  color,
+  onPress,
+}: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  label: string;
+  active: boolean;
+  color: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.actionButton,
+        { borderColor: active ? color : colors.border, backgroundColor: active ? color + "18" : colors.surface },
+      ]}
+    >
+      <MaterialCommunityIcons name={icon} size={19} color={color} />
+      <Text style={[styles.actionLabel, { color }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", padding: 28 },
@@ -200,6 +251,10 @@ const styles = StyleSheet.create({
   statHint: { color: colors.secondary, fontSize: 10, lineHeight: 14, marginTop: 3 },
   ratingRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 },
   ratingValue: { color: colors.text, fontSize: 18, fontWeight: "900" },
+  actions: { flexDirection: "row", gap: 9, paddingHorizontal: 20, marginTop: 18 },
+  actionButton: { flex: 1, minHeight: 48, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: 3 },
+  actionLabel: { fontSize: 9, fontWeight: "900", letterSpacing: 1 },
+  saving: { color: colors.muted, fontSize: 10, textAlign: "center", marginTop: 7 },
   section: { paddingHorizontal: 20, marginTop: 28 },
   sectionTitle: { color: colors.text, fontSize: 19, fontWeight: "900" },
   synopsis: { color: colors.secondary, fontSize: 14, lineHeight: 22, marginTop: 9 },

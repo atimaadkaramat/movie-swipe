@@ -63,19 +63,22 @@ Exit: approved Figma concept is the visual source of truth; implementation begin
 - [x] Add local mock movie data and a functional four-direction swipe prototype.
 - [x] Establish the GitHub development branch and Android app foundation.
 - [x] Validate the Android app on a physical Android device.
-- [x] Configure the Supabase client integration without committing secrets.\n  - Runtime values are supplied through `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- [x] Configure the Supabase client integration without committing secrets.
+  - Runtime values are supplied through `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - [x] Configure TMDB integration boundary.
 
 
 ## Phase 3 — Authentication
-- [ ] Sign up.
-- [ ] Login.
-- [ ] Email verification.
-- [ ] Session persistence.
-- [ ] Logout.
-- [ ] Password recovery.
-- [ ] Profile creation.
-- [ ] Supabase Row Level Security.
+- [x] Sign up.
+- [x] Login.
+- [x] Email verification flow foundation with mobile deep-link handling.
+- [x] Session persistence.
+- [x] Logout.
+- [x] Password recovery flow.
+- [x] Profile creation and onboarding.
+- [x] Supabase Row Level Security for profiles.
+
+**Phase 3 implementation status:** authentication and profile functionality are implemented; physical-device verification of the complete email/deep-link/password-recovery flow remains before the phase gate can be closed.
 
 Exit: secure registration and session flow works end-to-end.
 

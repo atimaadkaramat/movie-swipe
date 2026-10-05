@@ -6,11 +6,11 @@ import { getSession, sendPasswordReset, signIn, signUp } from "../services/auth"
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [resetMode, setResetMode] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [resetMode, setResetMode] = useState(false);
 
   useEffect(() => {
     void getSession().then((session) => {
@@ -20,7 +20,10 @@ export function AuthScreen() {
 
   async function resetPassword() {
     setMessage("");
-    if (!email.trim()) { setMessage("Enter your email address first."); return; }
+    if (!email.trim()) {
+      setMessage("Enter your email address first.");
+      return;
+    }
     setBusy(true);
     try {
       const result = await sendPasswordReset(email);
@@ -28,7 +31,9 @@ export function AuthScreen() {
       setMessage("Password reset email sent. Check your inbox.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not send the reset email.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function submit() {
@@ -37,6 +42,7 @@ export function AuthScreen() {
       setMessage("Enter a valid email and a password with at least 6 characters.");
       return;
     }
+
     setBusy(true);
     try {
       const result = mode === "login"
@@ -57,12 +63,20 @@ export function AuthScreen() {
     }
   }
 
+  function switchMode() {
+    setResetMode(false);
+    setMode(mode === "login" ? "signup" : "login");
+    setMessage("");
+  }
+
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.glow} />
       <View style={styles.content}>
         <Text style={styles.logo}>CINESWIPE</Text>
-        <Text style={styles.title}>{resetMode ? "Reset your password." : mode === "login" ? "Welcome back." : "Find your movie taste."}</Text>
+        <Text style={styles.title}>
+          {resetMode ? "Reset your password." : mode === "login" ? "Welcome back." : "Find your movie taste."}
+        </Text>
         <Text style={styles.subtitle}>
           Swipe movies. Build your taste. Find people who get your cinema.
         </Text>
@@ -78,22 +92,41 @@ export function AuthScreen() {
             placeholderTextColor={colors.muted}
             style={styles.input}
           />
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="Password"
-            placeholderTextColor={colors.muted}
-            style={styles.input}
-          />
+
+          {!resetMode ? (
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Password"
+              placeholderTextColor={colors.muted}
+              style={styles.input}
+            />
+          ) : null}
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
 
-          <Pressable style={[styles.primary, busy && styles.disabled]} onPress={submit} disabled={busy}>
-            {busy ? <ActivityIndicator color="#111319" /> : <Text style={styles.primaryText}>{mode === "login" ? "LOG IN" : "CREATE ACCOUNT"}</Text>}
+          <Pressable
+            style={[styles.primary, busy && styles.disabled]}
+            onPress={resetMode ? resetPassword : submit}
+            disabled={busy}
+          >
+            {busy ? (
+              <ActivityIndicator color="#111319" />
+            ) : (
+              <Text style={styles.primaryText}>
+                {resetMode ? "SEND RESET EMAIL" : mode === "login" ? "LOG IN" : "CREATE ACCOUNT"}
+              </Text>
+            )}
           </Pressable>
 
-          {mode === "login" && !resetMode ? <Pressable onPress={() => { setResetMode(true); setMessage(""); }}>\n            <Text style={styles.switch}>Forgot your password?</Text>\n          </Pressable> : null}\n\n          <Pressable onPress={() => { setResetMode(false); setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
+          {mode === "login" && !resetMode ? (
+            <Pressable onPress={() => { setResetMode(true); setMessage(""); }}>
+              <Text style={styles.switch}>Forgot your password?</Text>
+            </Pressable>
+          ) : null}
+
+          <Pressable onPress={switchMode}>
             <Text style={styles.switch}>
               {resetMode ? "Back to login" : mode === "login" ? "New to CineSwipe? Create an account" : "Already have an account? Log in"}
             </Text>

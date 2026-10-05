@@ -54,7 +54,6 @@ Goal: establish the mobile design system.
 Exit: approved Figma concept is the visual source of truth; implementation begins with Phase 2.
 
 ## Phase 2 — Project & Infrastructure
-
 - [x] Create dedicated Android-first Expo + React Native + TypeScript foundation.
 - [x] Set Android application ID to `com.cineswipe.app`.
 - [x] Establish Expo Router navigation shell.
@@ -64,9 +63,7 @@ Exit: approved Figma concept is the visual source of truth; implementation begin
 - [x] Establish the GitHub development branch and Android app foundation.
 - [x] Validate the Android app on a physical Android device.
 - [x] Configure the Supabase client integration without committing secrets.
-  - Runtime values are supplied through `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - [x] Configure TMDB integration boundary.
-
 
 ## Phase 3 — Authentication
 - [x] Sign up.
@@ -87,11 +84,13 @@ Exit: secure registration and session flow works end-to-end.
 - [x] Discovery, trending/popular, search.
 - [x] Genres.
 - [x] Movie details.
-- [ ] Cast/crew.
+- [x] Cast/crew.
 - [x] Similar movies.
 - [ ] Selective metadata caching in Supabase.
 - [x] Pagination for the discovery feed.
 - [ ] Persistent metadata caching.
+
+**Phase 4 implementation status:** the client-side TMDB data layer is implemented and the Discover/Movie Details screens consume real data. Persistent metadata caching and production API protection remain.
 
 Exit: real movie data renders reliably.
 
@@ -103,18 +102,21 @@ Goal: build the core CineSwipe interaction.
 - [x] Down swipe = Movie details.
 - [ ] Undo where appropriate.
 - [ ] Animation and haptics.
-- [x] Persist like/pass/watchlist actions locally; Supabase persistence follows authentication.
-- [ ] Prevent duplicate/conflicting actions.
-- [ ] Discovery queue.
+- [x] Persist like/pass/watchlist actions locally and sync authenticated actions to Supabase.
+- [x] Prevent duplicate/conflicting actions via one action per user/movie.
+- [x] Discovery queue with paginated TMDB input.
 
 Core action model:
-movie_actions: id, user_id, movie_id, action, created_at.
+movie_actions: id, user_id, movie_id, action, created_at, updated_at, movie_snapshot.
 
-Actions: like, pass, wishlist, watched.
+Actions: like, pass, watchlist.
+
+**Persistence implementation:** authenticated users write actions to the CineSwipe Supabase project. Existing local actions are migrated on first authenticated read, and local storage remains as an offline fallback.
 
 Exit: open app → see movie → swipe → action persists → next movie appears.
 
 ## Phase 6 — Library
+- [x] Watchlist.
 - [ ] Liked.
 - [ ] Wishlist.
 - [ ] Watched.
@@ -122,6 +124,7 @@ Exit: open app → see movie → swipe → action persists → next movie appear
 - [ ] Filters.
 - [ ] Sorting.
 - [ ] Pagination.
+- [x] Watchlist reads the synced movie action history.
 
 Exit: actions are correctly reflected in Library.
 
@@ -153,11 +156,8 @@ Exit: users can follow people and see relevant movie activity.
 
 ## Phase 9 — Recommendation Engine
 Stage 1: rule-based signals: genre, actor, director, ratings, recent behavior, passes, popularity and recency.
-
 Stage 2: collaborative filtering using users with similar movie behavior.
-
 Stage 3: hybrid content + collaborative + recency + diversity + novelty.
-
 - [ ] Personalized candidate generation.
 - [ ] Recommendation ranking.
 - [ ] Recommendation explanations.
@@ -235,7 +235,7 @@ Security:
 
 Performance:
 - [ ] Image caching.
-- [ ] Pagination.
+- [x] Pagination.
 - [ ] Efficient queries.
 - [ ] Swipe animation performance.
 - [ ] Startup performance.
@@ -266,8 +266,6 @@ Exit: production Android build is stable and ready for Google Play.
 - [ ] Improve swipe quality.
 - [ ] Prioritize feature requests.
 - [ ] Optimize free-tier usage.
-
-Future possibilities: AI recommendations, watch parties, chat, streaming availability, taste analytics, challenges, badges, leaderboards and creator lists.
 
 ## MVP definition
 The first public-quality MVP is Phases 0–7.

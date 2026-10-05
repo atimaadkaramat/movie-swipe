@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { getTasteSummary } from "../../src/services/taste";
 import { getWatchlist } from "../../src/services/library";
 import { signOut } from "../../src/services/auth";
+import { getMyProfile, type Profile as UserProfile } from "../../src/services/profile";
 import { router } from "expo-router";
 import { colors } from "../../src/theme";
 
@@ -19,11 +20,23 @@ type Summary = {
 export default function Profile() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [watchlistCount, setWatchlistCount] = useState(0);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState("");
 
   const load = useCallback(async () => {
-    const [taste, watchlist] = await Promise.all([getTasteSummary(), getWatchlist()]);
-    setSummary(taste);
-    setWatchlistCount(watchlist.length);
+    setProfileError("");
+    try {
+      const [taste, watchlist, savedProfile] = await Promise.all([
+        getTasteSummary(),
+        getWatchlist(),
+        getMyProfile(),
+      ]);
+      setSummary(taste);
+      setWatchlistCount(watchlist.length);
+      setProfile(savedProfile);
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : "Could not load your profile.");
+    }
   }, []);
 
   useFocusEffect(useCallback(() => {
@@ -33,10 +46,25 @@ export default function Profile() {
   if (!summary) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
+        {profileError ? (
+          <>
+            <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.pass} />
+            <Text style={styles.errorTitle}>Could not load your profile</Text>
+            <Text style={styles.errorBody}>{profileError}</Text>
+            <Pressable style={styles.retry} onPress={() => void load()}>
+              <Text style={styles.retryText}>RETRY</Text>
+            </Pressable>
+          </>
+        ) : (
+          <ActivityIndicator color={colors.accent} />
+        )}
       </View>
     );
   }
+
+  const displayName = profile?.display_name || "CineSwipe User";
+  const username = profile?.username ? `@${profile.username}` : "";
+  const bio = profile?.bio || "Every swipe helps CineSwipe understand your movie taste.";
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -45,10 +73,9 @@ export default function Profile() {
           <MaterialCommunityIcons name="account" size={42} color={colors.accent} />
         </View>
         <Text style={styles.kicker}>YOUR TASTE DNA</Text>
-        <Text style={styles.title}>CineSwipe Profile</Text>
-        <Text style={styles.subtitle}>
-          Every swipe helps CineSwipe understand your movie taste.
-        </Text>
+        <Text style={styles.title}>{displayName}</Text>
+        {username ? <Text style={styles.username}>{username}</Text> : null}
+        <Text style={styles.subtitle}>{bio}</Text>
       </View>
 
       <View style={styles.statsGrid}>
@@ -113,11 +140,16 @@ function Stat({ icon, label, value, color }: { icon: keyof typeof MaterialCommun
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 36 },
-  center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" },
+  center: { flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", padding: 24 },
+  errorTitle: { color: colors.text, fontSize: 20, fontWeight: "900", marginTop: 12, textAlign: "center" },
+  errorBody: { color: colors.secondary, fontSize: 12, lineHeight: 18, marginTop: 8, textAlign: "center" },
+  retry: { marginTop: 18, height: 46, paddingHorizontal: 22, borderRadius: 14, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center" },
+  retryText: { color: "#111319", fontSize: 11, fontWeight: "900", letterSpacing: 1 },
   hero: { alignItems: "center", paddingTop: 24 },
   avatar: { width: 84, height: 84, borderRadius: 42, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(208,188,255,.10)", borderWidth: 1, borderColor: "rgba(208,188,255,.18)", marginBottom: 18 },
   kicker: { color: colors.accent, fontSize: 9, fontWeight: "900", letterSpacing: 1.5 },
   title: { color: colors.text, fontSize: 27, fontWeight: "900", marginTop: 5 },
+  username: { color: colors.accent, fontSize: 12, fontWeight: "800", marginTop: 4 },
   subtitle: { color: colors.secondary, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 7, maxWidth: 310 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 26 },
   stat: { width: "48%", minHeight: 88, borderRadius: 20, padding: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

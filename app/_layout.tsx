@@ -14,16 +14,26 @@ export default function RootLayout() {
       const hash = url.includes("#") ? url.split("#")[1] : "";
       const query = url.includes("?") ? url.split("?")[1].split("#")[0] : "";
       const params = new URLSearchParams(hash || query);
+
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
+      const code = params.get("code");
       const type = params.get("type");
 
-      if (!accessToken || !refreshToken) return;
+      let error: Error | null = null;
 
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
+      if (accessToken && refreshToken) {
+        const result = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        error = result.error;
+      } else if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        error = result.error;
+      } else {
+        return;
+      }
 
       if (error) return;
 

@@ -2,33 +2,40 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { getTasteEvents, removeTasteAction, type TasteAction } from "../../src/services/taste";
+import { getRatings, getTasteEvents, getWatchedMovies, removeTasteAction, removeWatched, type TasteAction } from "../../src/services/taste";
 import type { Movie } from "../../src/data/mockMovies";
 import { colors } from "../../src/theme";
 
-type LibraryFilter = Extract<TasteAction, "watchlist" | "like" | "pass">;
+type LibraryFilter = "watchlist" | "like" | "pass" | "watched" | "rated";
 const FILTERS: { key: LibraryFilter; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
   { key: "watchlist", label: "Saved", icon: "bookmark" },
   { key: "like", label: "Liked", icon: "heart" },
   { key: "pass", label: "Passed", icon: "close" },
+  { key: "watched", label: "Watched", icon: "check-circle" },
+  { key: "rated", label: "Rated", icon: "star" },
 ];
 
 export default function Library() {
   const [filter, setFilter] = useState<LibraryFilter>("watchlist");
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [counts, setCounts] = useState<Record<LibraryFilter, number>>({ watchlist: 0, like: 0, pass: 0 });
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [counts, setCounts] = useState<Record<LibraryFilter, number>>({ watchlist: 0, like: 0, pass: 0, watched: 0, rated: 0 });
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const events = await getTasteEvents();
+      const [events, watched, rated] = await Promise.all([getTasteEvents(), getWatchedMovies(), getRatings()]);
+      const ratingMap = Object.fromEntries(rated.map((item) => [item.movieId, item.rating]));
+      setRatings(ratingMap);
       setCounts({
         watchlist: events.filter((event) => event.action === "watchlist").length,
         like: events.filter((event) => event.action === "like").length,
         pass: events.filter((event) => event.action === "pass").length,
+        watched: watched.length,
+        rated: rated.length,
       });
-      setMovies(events.filter((event) => event.action === filter).map((event) => event.movie));
+      setMovies(filter === "watched" ? watched : filter === "rated" ? rated.map((item) => item.movie) : events.filter((event) => event.action === filter).map((event) => event.movie));
     } finally {
       setLoading(false);
     }
@@ -65,7 +72,7 @@ export default function Library() {
           <View style={styles.emptyIcon}><MaterialCommunityIcons name={current.icon} size={32} color={colors.accent} /></View>
           <Text style={styles.emptyTitle}>Nothing here yet</Text>
           <Text style={styles.muted}>
-            {filter === "watchlist" ? "Swipe ↑ on movies you want to watch later." : filter === "like" ? "Swipe → on movies you want to keep." : "Passed movies will appear here."}
+            {filter === "watchlist" ? "Swipe ↑ on movies you want to watch later." : filter === "like" ? "Swipe → on movies you want to keep." : filter === "passed" ? "Passed movies will appear here." : filter === "watched" ? "Movies you have watched will appear here." : "Movies you have rated will appear here."}
           </Text>
         </View>
       ) : (
@@ -81,10 +88,10 @@ export default function Library() {
               {item.poster ? <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" /> : <View style={[styles.poster, styles.posterFallback]}><MaterialCommunityIcons name="movie-open-outline" size={28} color={colors.muted} /></View>}
               <View style={styles.itemInfo}>
                 <Text numberOfLines={1} style={styles.movieTitle}>{item.title}</Text>
-                <Text style={styles.meta}>{item.year} • {item.rating.toFixed(1)}</Text>
+                <Text style={styles.meta}>{item.year} • {item.rating.toFixed(1)}{filter === "rated" && ratings[item.id] ? ` • ${ratings[item.id]}/10` : ""}</Text>
                 <Pressable
                   style={styles.remove}
-                  onPress={() => { void removeTasteAction(item.id).then(load); }}
+                  onPress={() => { void (filter === "watched" ? removeWatched(item.id) : removeTasteAction(item.id)).then(load); }}
                   accessibilityLabel={`Remove ${item.title} from library`}
                 >
                   <MaterialCommunityIcons name="trash-can-outline" size={16} color={colors.secondary} />

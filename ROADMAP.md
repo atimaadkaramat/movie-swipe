@@ -135,7 +135,7 @@ Exit: actions are correctly reflected in Library.
 - [x] Synopsis.
 - [x] Cast/crew data and UI.
 - [ ] Trailer where permitted/available.
-- [ ] Like/Pass/Wishlist controls.
+- [x] Like/Pass/Save controls.
 - [x] Similar movies data and UI.
 - [ ] Social activity.
 - [ ] Compatibility indicator when available.

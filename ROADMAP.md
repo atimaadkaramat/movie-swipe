@@ -126,14 +126,14 @@ Exit: open app → see movie → swipe → action persists → next movie appear
 Exit: actions are correctly reflected in Library.
 
 ## Phase 7 — Movie Pages
-- [ ] Poster/backdrop.
-- [ ] Title/year/runtime.
-- [ ] Genres.
-- [ ] Synopsis.
-- [ ] Cast.
+- [x] Poster/backdrop.
+- [x] Title/year.
+- [x] Genres.
+- [x] Synopsis.
+- [x] Cast/crew data and UI.
 - [ ] Trailer where permitted/available.
 - [ ] Like/Pass/Wishlist controls.
-- [ ] Similar movies.
+- [x] Similar movies data and UI.
 - [ ] Social activity.
 - [ ] Compatibility indicator when available.
 

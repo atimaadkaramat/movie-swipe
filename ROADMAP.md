@@ -83,14 +83,15 @@ Exit: approved Figma concept is the visual source of truth; implementation begin
 Exit: secure registration and session flow works end-to-end.
 
 ## Phase 4 — TMDB Movie Data
-- [ ] Configure TMDB API.
-- [ ] Discovery, trending/popular, search.
-- [ ] Genres.
-- [ ] Movie details.
+- [x] Configure TMDB API.
+- [x] Discovery, trending/popular, search.
+- [x] Genres.
+- [x] Movie details.
 - [ ] Cast/crew.
-- [ ] Similar movies.
+- [x] Similar movies.
 - [ ] Selective metadata caching in Supabase.
-- [ ] Pagination/caching.
+- [x] Pagination for the discovery feed.
+- [ ] Persistent metadata caching.
 
 Exit: real movie data renders reliably.
 
